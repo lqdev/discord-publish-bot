@@ -1,0 +1,259 @@
+#+TITLE: Discord Post to GitHub Publisher - Spec & Implementation Plan
+#+AUTHOR: [Your Name]
+#+DESCRIPTION: Detailed spec and implementation plan for posting content from Discord to a GitHub static site via API.
+
+* Overview
+This project enables a streamlined workflow where posts created in Discord are parsed and published as markdown files with YAML front matter into a GitHub repository backing a static site. Supported post types are notes, responses, bookmarks, and media. 
+
+The workflow is:
+
+1. User invokes a Discord slash command (e.g., /post note).
+2. The Discord bot collects post details via modals or replies (for media attachments).
+3. The bot sends a POST request to a secured FastAPI publishing API.
+4. The FastAPI server validates the request, builds the markdown file, and commits it into the appropriate folder in the GitHub repo.
+5. GitHub Actions detect changes and rebuild the static site.
+
+* Key Components
+** Discord Bot
+- Built using discord.py
+- Supports slash commands and modal dialogs
+- Collects user input based on post type
+- Validates user identity (Discord User ID)
+- Sends authenticated POST requests to the publishing API
+
+** Publishing API (FastAPI Server)
+- Exposes a `/publish` POST endpoint
+- Validates API key and Discord user ID (fail fast)
+- Parses post type and content
+- Builds markdown with YAML front matter
+- Commits file to GitHub repo in correct folder
+- Returns status and filepath
+
+** GitHub Repository
+- Stores markdown posts inside `posts/` subfolders by type
+- Triggers static site generator builds via GitHub Actions
+
+* Post Types and Folder Mapping
+| Post Type | Required Fields                                     | Storage Folder   |
+|-----------+-----------------------------------------------------+------------------|
+| note      | content (markdown)                                 | posts/notes/     |
+| response  | response_type (reply, like, reshare), body        | posts/responses/ |
+| bookmark  | url, optional notes                                | posts/bookmarks/ |
+| media     | media URL or attachment, caption                   | posts/media/     |
+
+* API Specification
+
+** Endpoint: /publish
+- Method: POST
+- Headers:
+  - `X-API-Key`: API key for authentication
+- Payload (JSON):
+  #+begin_src json
+  {
+    "message": "/post note\n---\ntitle: My Note\n---\nThis is **markdown** content.",
+    "user_id": "123456789012345678"
+  }
+  #+end_src
+- Response (Success):
+  #+begin_src json
+  {
+    "status": "success",
+    "filepath": "posts/notes/2025-08-08-my-note.md"
+  }
+  #+end_src
+- Response (Failure):
+  - 401 Unauthorized if API key invalid
+  - 403 Forbidden if user_id mismatch
+  - 400 Bad Request for invalid payload
+
+* Environment Variables / Config
+- `DISCORD_BOT_TOKEN`: Discord bot OAuth token
+- `DISCORD_USER_ID`: Your Discord user ID (string)
+- `API_KEY`: Secret key for API authentication
+- `FASTAPI_ENDPOINT`: URL to FastAPI server
+- `GITHUB_TOKEN`: GitHub personal access token with repo write permissions
+- `GITHUB_REPO`: Repo name, e.g. `youruser/yourrepo`
+- `GITHUB_BRANCH`: Branch to commit to, e.g. `main`
+
+* File Structure in GitHub Repository
+#+begin_src text
+posts/
+├── notes/
+│   └── 2025-08-08-my-note.md
+├── responses/
+│   └── 2025-08-08-my-response.md
+├── bookmarks/
+│   └── 2025-08-08-my-bookmark.md
+└── media/
+    └── 2025-08-08-my-media.md
+#+end_src
+
+* Discord Bot Implementation Plan
+
+** Commands and Interactions
+- /post <post_type> - invokes modal dialog for the post type
+- /post_media - expects reply with attachment for media posts
+
+** Workflow
+- Verify the user ID matches DISCORD_USER_ID before proceeding
+- Collect fields via modal inputs or message replies
+- Format the message payload including the `/post <post_type>` command line
+- Send POST request to the FastAPI `/publish` endpoint with API key and user_id header
+
+** Example: Modal for Note Post (Python snippet)
+#+begin_src python
+class NoteModal(discord.ui.Modal, title="Create a Note"):
+    content = discord.ui.TextInput(label="Content (Markdown)", style=discord.TextStyle.paragraph)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        post_message = f"/post note\n\n{self.content.value}"
+        # Send post_message to FastAPI API with proper auth...
+#+end_src
+
+* FastAPI Server Implementation Plan
+
+** Endpoint: /publish
+
+#+begin_src python
+from fastapi import FastAPI, Header, HTTPException
+import os
+from datetime import datetime
+from github import Github
+
+app = FastAPI()
+
+API_KEY = os.getenv("API_KEY")
+DISCORD_USER_ID = os.getenv("DISCORD_USER_ID")
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+GITHUB_REPO = os.getenv("GITHUB_REPO")
+GITHUB_BRANCH = os.getenv("GITHUB_BRANCH", "main")
+
+POST_TYPE_TO_FOLDER = {
+    "note": "notes",
+    "response": "responses",
+    "bookmark": "bookmarks",
+    "media": "media",
+}
+
+@app.post("/publish")
+async def publish_post(payload: dict, x_api_key: str = Header(None)):
+    if x_api_key != API_KEY:
+        raise HTTPException(401, "Unauthorized")
+    if payload.get("user_id") != DISCORD_USER_ID:
+        raise HTTPException(403, "Forbidden: Unauthorized user")
+
+    message = payload.get("message", "")
+    if not message.startswith("/post"):
+        raise HTTPException(400, "Invalid message format")
+
+    # Parse post type from first line
+    first_line = message.splitlines()[0]
+    parts = first_line.split()
+    if len(parts) < 2:
+        raise HTTPException(400, "Post type missing")
+    post_type = parts[1]
+    folder = POST_TYPE_TO_FOLDER.get(post_type, "notes")
+
+    # Extract frontmatter and content (implement parse_frontmatter_and_content)
+    frontmatter, content = parse_frontmatter_and_content(post_type, message)
+
+    # Build markdown string with YAML frontmatter
+    markdown = build_markdown_file(frontmatter, content)
+
+    # Generate filename slug from content and date
+    date_str = datetime.utcnow().strftime("%Y-%m-%d")
+    slug = generate_slug(content)
+    filename = f"{date_str}-{slug}.md"
+    filepath = f"posts/{folder}/{filename}"
+
+    # Commit to GitHub
+    g = Github(GITHUB_TOKEN)
+    repo = g.get_repo(GITHUB_REPO)
+    commit_msg = f"Add {post_type} post from Discord user {payload.get('user_id')}"
+    github_commit_file(repo, filepath, markdown, commit_msg, GITHUB_BRANCH)
+
+    return {"status": "success", "filepath": filepath}
+#+end_src
+
+** Helper Functions (Descriptions)
+- `parse_frontmatter_and_content(post_type, message)`: Extract YAML frontmatter fields and markdown content from message.
+- `build_markdown_file(frontmatter: dict, content: str) -> str`: Constructs markdown string starting with `---\n<yaml>\n---\n` then content.
+- `generate_slug(content: str) -> str`: Sanitizes content snippet into URL-friendly slug.
+- `github_commit_file(repo, filepath, content, commit_message, branch)`: Creates or updates file in GitHub repo.
+
+* GitHub Commit Logic
+
+- Use PyGithub to commit files to target repo and branch
+- If file exists, update it; otherwise, create new
+- Commit messages include post type and user ID for traceability
+
+* Media Handling
+
+- For `/post_media` command, bot obtains attachments from replied message
+- Attachments are uploaded (if needed) to external hosting (optional)
+- URLs included in frontmatter or content for media posts
+
+* Security Considerations
+
+- API key validation on FastAPI server
+- Discord user ID whitelist — only authorized user can publish
+- Fail fast on unauthorized requests to minimize processing
+- HTTPS enforced on API endpoint
+
+* Deployment and Running
+
+- FastAPI deployed on a public HTTPS endpoint (Fly.io, Railway, etc.)
+- Discord bot hosted separately with internet access
+- Environment variables securely stored for keys and tokens
+- GitHub token with repo write permissions
+- GitHub Actions set up to auto-build static site on new commits
+
+* Milestones and Task List
+
+** Discord Bot
+- [ ] Setup discord.py bot with slash commands and modal dialogs
+- [ ] Implement `/post` command supporting note, response, bookmark
+- [ ] Implement `/post_media` command handling replied-to message attachments
+- [ ] Validate user ID before sending API requests
+- [ ] Format and send API requests with authentication
+- [ ] Handle API responses and provide user feedback in Discord
+
+** FastAPI Server
+- [ ] Implement `/publish` POST endpoint with fail-fast auth checks
+- [ ] Parse message payload into YAML frontmatter and markdown content
+- [ ] Map post type to correct directory folder
+- [ ] Generate filename with date + slug
+- [ ] Commit markdown file to GitHub repo with PyGithub
+- [ ] Return success or error response
+
+** GitHub & Deployment
+- [ ] Configure GitHub repo structure with per-post-type folders
+- [ ] Setup GitHub Actions for static site build triggers
+- [ ] Deploy FastAPI server with HTTPS endpoint
+- [ ] Host and maintain Discord bot process
+
+* Example Slug Generation (Python snippet)
+
+#+begin_src python
+import re
+def generate_slug(content: str) -> str:
+    snippet = content.strip().split("\n")[0][:30].lower()
+    slug = re.sub(r"[^a-z0-9\- ]", "", snippet)
+    slug = slug.replace(" ", "-")
+    return slug
+#+end_src
+
+* Example Markdown Builder (Python snippet)
+
+#+begin_src python
+def build_markdown_file(frontmatter: dict, content: str) -> str:
+    import yaml
+    fm_yaml = yaml.safe_dump(frontmatter, sort_keys=False).strip()
+    return f"---\n{fm_yaml}\n---\n\n{content}"
+#+end_src
+
+* Notes
+- You may extend supported post types in future.
+- Consider adding logging and error monitoring.
+- Optionally support media uploads to CDN and replace URLs.
+- Design the Discord bot UX for easy user input and confirmation.
