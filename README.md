@@ -173,10 +173,28 @@ This project follows sprint-based development with comprehensive documentation. 
 
 ## Security
 
+⚠️ **IMPORTANT**: Never commit `.env` files or credentials to version control!
+
+### Quick Security Setup
+```bash
+# 1. Copy environment template
+cp .env.example .env
+
+# 2. Generate secure API key
+uv run python -c "import secrets; print(secrets.token_urlsafe(32))"
+
+# 3. Fill in your credentials in .env file
+# See docs/team/security-guidelines.md for detailed setup
+```
+
+### Security Features
 - All API endpoints require authentication via API key
 - Discord user validation prevents unauthorized usage  
 - Environment variables for secure configuration
 - HTTPS enforcement for production deployments
+- Comprehensive .gitignore protecting sensitive files
+
+For complete security guidelines, see [Security Documentation](docs/team/security-guidelines.md).
 
 ## Contributing
 
