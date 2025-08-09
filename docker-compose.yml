@@ -1,8 +1,6 @@
 # Docker Compose for Discord Publish Bot - Local Production Testing
 # Use this to test the production Docker image locally before Azure deployment
 
-version: '3.8'
-
 services:
   discord-publish-bot:
     build:
@@ -13,14 +11,36 @@ services:
     ports:
       - "8000:8000"
     environment:
-      # Override for local testing
+      # Application Configuration
       - ENVIRONMENT=development
       - LOG_LEVEL=DEBUG
+      
+      # API Configuration  
       - API_HOST=0.0.0.0
       - API_PORT=8000
-      # Load from .env file (create from .env.production.example)
+      
+      # Discord Configuration (loaded from .env.local)
+      # - DISCORD_BOT_TOKEN=
+      # - DISCORD_APPLICATION_ID=
+      # - DISCORD_PUBLIC_KEY=
+      # - DISCORD_USER_ID=
+      # - DISCORD_GUILD_ID=
+      
+      # GitHub Configuration (loaded from .env.local)
+      # - GITHUB_TOKEN=
+      # - GITHUB_REPO=
+      # - GITHUB_BRANCH=main
+      
+      # API Security (loaded from .env.local)
+      # - API_KEY=
+      # - FASTAPI_ENDPOINT=http://localhost:8000
+      
+      # Publishing Configuration (loaded from .env.local)
+      # - SITE_BASE_URL=
+      # - DEFAULT_AUTHOR=
     env_file:
-      - .env.local
+      - path: .env.local  # Create from .env.local.example
+        required: false
     volumes:
       # Mount logs for local debugging (remove in production)
       - ./logs:/app/logs
@@ -78,8 +98,12 @@ volumes:
   grafana-data:
 
 # Usage:
-# 1. Copy .env.production.example to .env.local and fill in values
+# 1. Copy .env.local.example to .env.local and fill in actual values
 # 2. Build and run: docker-compose up --build
 # 3. Test health: curl http://localhost:8000/health
-# 4. Test Discord interactions: Use Discord Developer Portal
-# 5. With monitoring: docker-compose --profile monitoring up --build
+# 4. Test API docs: http://localhost:8000/docs
+# 5. Test Discord interactions: Use Discord Developer Portal
+# 6. With monitoring: docker-compose --profile monitoring up --build
+#
+# Stop: docker-compose down
+# Clean rebuild: docker-compose down && docker-compose up --build --force-recreate
