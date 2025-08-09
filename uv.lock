@@ -215,14 +215,14 @@ wheels = [
 
 [[package]]
 name = "click"
-version = "8.2.1"
+version = "8.1.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "colorama", marker = "sys_platform == 'win32'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/60/6c/8ca2efa64cf75a977a0d7fac081354553ebe483345c734fb6b6515d96bbc/click-8.2.1.tar.gz", hash = "sha256:27c491cc05d968d271d5a1db13e3b5a184636d9d930f148c50b038f0d0646202", size = 286342, upload-time = "2025-05-20T23:19:49.832Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/96/d3/f04c7bfcf5c1862a2a5b845c6b2b360488cf47af55dfa79c98f6a6bf98b5/click-8.1.7.tar.gz", hash = "sha256:ca9853ad459e787e2192211578cc907e7594e294c7ccc834310722b41b9ca6de", size = 336121, upload-time = "2023-08-17T17:29:11.868Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/85/32/10bb5764d90a8eee674e9dc6f4db6a0ab47c8c4d0d83c27f7c39ac415a4d/click-8.2.1-py3-none-any.whl", hash = "sha256:61a3265b914e850b85317d0b3109c7f8cd35a670f963866005d6ef1d5175a12b", size = 102215, upload-time = "2025-05-20T23:19:47.796Z" },
+    { url = "https://files.pythonhosted.org/packages/00/2e/d53fa4befbf2cfa713304affc7ca780ce4fc1fd8710527771b58311a3229/click-8.1.7-py3-none-any.whl", hash = "sha256:ae74fb96c20a0277a1d615f1e4d73c8414f5a98db8b799a7931d1582f3390c28", size = 97941, upload-time = "2023-08-17T17:29:10.08Z" },
 ]
 
 [[package]]
@@ -373,10 +373,12 @@ version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
+    { name = "click" },
     { name = "discord-py" },
     { name = "fastapi" },
     { name = "prometheus-client" },
     { name = "pydantic" },
+    { name = "pydantic-settings" },
     { name = "pygithub" },
     { name = "pynacl" },
     { name = "python-dotenv" },
@@ -402,11 +404,13 @@ monitoring = [
 requires-dist = [
     { name = "aiohttp", specifier = "==3.9.1" },
     { name = "black", marker = "extra == 'dev'", specifier = "==23.11.0" },
+    { name = "click", specifier = "==8.1.7" },
     { name = "discord-py", specifier = "==2.3.2" },
     { name = "fastapi", specifier = "==0.104.1" },
     { name = "isort", marker = "extra == 'dev'", specifier = "==5.12.0" },
     { name = "prometheus-client", specifier = "==0.19.0" },
     { name = "pydantic", specifier = "==2.5.0" },
+    { name = "pydantic-settings", specifier = "==2.0.3" },
     { name = "pygithub", specifier = "==1.59.1" },
     { name = "pynacl", specifier = "==1.5.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = "==7.4.3" },
@@ -870,6 +874,19 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/f2/47/a0cd42721edf31556006278d34c02f1c45ddf5aa0bbd629824a4412b776f/pydantic_core-2.14.1-cp312-none-win32.whl", hash = "sha256:132b40e479cb5cebbbb681f77aaceabbc8355df16c9124cff1d4060ada83cde2", size = 1738151, upload-time = "2023-11-09T13:21:52.596Z" },
     { url = "https://files.pythonhosted.org/packages/f6/4a/ae0d4c98d97bd042162a9de7cea4b2f655b5876cd0557ff451eedf0778e6/pydantic_core-2.14.1-cp312-none-win_amd64.whl", hash = "sha256:744b807fe2733b6da3b53e8ad93e8b3ea3ee3dfc3abece4dd2824cc1f39aa343", size = 1864110, upload-time = "2023-11-09T13:21:54.632Z" },
     { url = "https://files.pythonhosted.org/packages/7e/9a/3d9f3a750a67cc3d1115c0581280025cadc1cbd55d5c60d1ba80c8de7535/pydantic_core-2.14.1-cp312-none-win_arm64.whl", hash = "sha256:24ba48f9d0b8d64fc5e42e1600366c3d7db701201294989aebdaca23110c02ab", size = 1847510, upload-time = "2023-11-09T13:21:57.252Z" },
+]
+
+[[package]]
+name = "pydantic-settings"
+version = "2.0.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pydantic" },
+    { name = "python-dotenv" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/87/65/37cb1a1cf837acff76a4138375b0fa101cd4ec0dd3acfa64485aadc86c56/pydantic_settings-2.0.3.tar.gz", hash = "sha256:962dc3672495aad6ae96a4390fac7e593591e144625e5112d359f8f67fb75945", size = 31677, upload-time = "2023-08-14T15:02:50.579Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/46/92/918ef6b14d54c6a4fccdecd65b3ee15360ca2b4aa52d5c9c4f39f99b4c56/pydantic_settings-2.0.3-py3-none-any.whl", hash = "sha256:ddd907b066622bd67603b75e2ff791875540dc485b7307c4fffc015719da8625", size = 11739, upload-time = "2023-08-14T15:02:49.385Z" },
 ]
 
 [[package]]

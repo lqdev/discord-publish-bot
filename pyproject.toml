@@ -20,6 +20,10 @@ dependencies = [
     "PyGithub==1.59.1",
     "python-multipart==0.0.6",
     "pydantic==2.5.0",
+    "pydantic-settings==2.0.3",
+    
+    # CLI and utilities
+    "click==8.1.7",
     
     # Shared Dependencies
     "python-dotenv==1.0.0",
@@ -49,16 +53,21 @@ Repository = "https://github.com/yourusername/discord-publish-bot"
 Documentation = "https://github.com/yourusername/discord-publish-bot/blob/main/README.md"
 
 [project.scripts]
-discord-bot = "discord_bot.main:cli_main"
-publishing-api = "publishing_api.main:main"
-combined-app = "combined_app:main"
+discord-publish-bot = "discord_publish_bot.main:main"
+dpb = "discord_publish_bot.main:main"
+dpb-api = "discord_publish_bot.main:api_main"
+
+# Legacy compatibility
+discord-bot = "discord_publish_bot.main:cli_main"
+publishing-api = "discord_publish_bot.main:api_main"
+combined-app = "discord_publish_bot.main:api_main"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/discord_bot", "src/discord_interactions", "src/publishing_api"]
+packages = ["src/discord_publish_bot"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
