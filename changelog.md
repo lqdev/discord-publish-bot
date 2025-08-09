@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Infrastructure & Development Environment 🚀
+- **Proper Python Entry Points**: Restructured project to use standard `pyproject.toml` entry points
+  - Added `discord-bot` and `publishing-api` CLI commands via UV
+  - Removed ad-hoc `run_bot.py` script in favor of proper package structure
+  - All code properly contained within `src/` directory following Python packaging standards
+- **Import System Resolution**: Fixed Python import compatibility issues
+  - Added fallback import strategy for both absolute and relative imports
+  - Resolved "attempted relative import with no known parent package" errors
+  - Improved module loading for different execution contexts
+- **Environment Variable Management**: Enhanced credential handling
+  - Fixed `.env` file priority over system environment variables
+  - Resolved GitHub token authentication issues with proper loading order
+  - Added `load_dotenv(override=True)` for consistent behavior
+
+### Repository & Code Quality 🧹  
+- **Repository Cleanup**: Comprehensive cleanup of tracked files
+  - Removed log files (`discord_bot.log`, `publishing_api.log`) from Git tracking
+  - Removed all Python cache directories (`__pycache__/`) from version control
+  - Enhanced `.gitignore` with explicit patterns and better organization
+  - Verified `uv.lock` inclusion following Python packaging best practices
+- **Documentation Updates**: Modernized README with proper entry point usage
+  - Updated all commands to use `uv run discord-bot` and `uv run publishing-api`
+  - Removed references to manual Python script execution
+  - Streamlined development workflow documentation
+
 ### Security Enhancements 🔒
 - **Comprehensive .gitignore**: Protection against credential leaks and sensitive file exposure
 - **Security Guidelines Documentation**: Complete setup and best practices guide
@@ -216,6 +241,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 📊 Architecture Implementation: Both microservices fully structured
 - 📊 Configuration Management: Complete environment setup
 - 📊 Documentation: README with setup and usage instructions
+
+### Milestone 1.75: Infrastructure Optimization ✅ (2025-08-08)
+**Status:** Completed  
+**Goal:** Optimize development infrastructure and resolve technical debt
+
+**Achievements:**
+- ✅ **Python Entry Points**: Restructured to proper `pyproject.toml` entry points following Python packaging standards
+- ✅ **Import System Resolution**: Fixed compatibility issues with fallback import strategy for different execution contexts
+- ✅ **Environment Management**: Resolved `.env` vs system environment variable conflicts with proper loading priority
+- ✅ **Repository Cleanup**: Removed tracked cache files, logs, enhanced `.gitignore` with Python best practices
+- ✅ **Authentication Debugging**: Successfully resolved GitHub token authentication issues
+- ✅ **Development Workflow**: Streamlined to `uv run discord-bot` and `uv run publishing-api` commands
+
+**Deliverables:**
+- `docs/adr/adr-002-python-entry-points.md` - Architecture Decision Record documenting restructuring
+- Enhanced `pyproject.toml` with proper entry point configuration
+- Updated `README.md` with modernized development workflow
+- Cleaned repository with proper `.gitignore` patterns
+- Updated `projects/active/discord-publish-bot.md` with current progress
+
+**Technical Improvements:**
+- 📊 **Code Quality**: Eliminated ad-hoc entry point scripts and import path hacks
+- 📊 **Standards Compliance**: Now follows Python packaging community best practices
+- 📊 **Developer Experience**: Simplified commands with consistent UV-based workflow
+- 📊 **Deployment Readiness**: Can be installed as proper Python package
+
+**Success Metrics:**
+- ✅ Entry points working correctly: `uv run discord-bot` successfully connects to Discord
+- ✅ GitHub authentication resolved: Repository access confirmed with proper credentials
+- ✅ Import system robust: Handles both absolute and relative import scenarios
+- ✅ Repository hygiene: Only appropriate files tracked, comprehensive `.gitignore`
 
 ### Milestone 2: Development Environment Setup ✅ (2025-08-08)
 **Status:** Completed ahead of schedule  

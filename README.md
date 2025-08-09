@@ -88,16 +88,14 @@ A Discord bot that automatically publishes Discord posts to GitHub repositories 
 
 ### Running the Application
 
-#### Development Mode
+#### Development Mode  
 ```bash
-# Activate virtual environment first
-.venv\Scripts\activate  # Windows
-# source .venv/bin/activate  # Linux/Mac
-
+# Using UV (recommended - no virtual environment activation needed)
 # Start Publishing API
 uv run publishing-api
 
 # Start Discord Bot (in separate terminal)
+uv run discord-bot
 uv run discord-bot
 ```
 
