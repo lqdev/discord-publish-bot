@@ -1,7 +1,7 @@
 """
 Pytest configuration and shared fixtures for Discord Publish Bot tests.
 
-Provides common fixtures, test configuration, and utilities for all test types.
+Provides safe, isolated test environment with mock credentials and dependencies.
 """
 
 import os
@@ -11,7 +11,83 @@ from pathlib import Path
 from typing import Dict, Any, AsyncGenerator
 from unittest.mock import Mock, AsyncMock
 
-# Import our application modules
+"""
+Pytest configuration and shared fixtures for Discord Publish Bot tests.
+
+Provides safe, isolated test environment with mock credentials and dependencies.
+"""
+
+import os
+import asyncio
+import pytest
+from pathlib import Path
+from typing import Dict, Any, AsyncGenerator
+from unittest.mock import Mock, AsyncMock, patch
+
+# Security: List of environment variables that contain sensitive data
+SENSITIVE_ENV_VARS = [
+    "DISCORD_BOT_TOKEN",
+    "DISCORD_USER_ID", 
+    "DISCORD_APPLICATION_ID",
+    "DISCORD_PUBLIC_KEY",
+    "DISCORD_GUILD_ID",
+    "GITHUB_TOKEN",
+    "GITHUB_REPO",
+    "API_KEY",
+    "FASTAPI_ENDPOINT",
+    "SITE_BASE_URL"
+]
+
+def verify_no_production_credentials():
+    """Verify that no production credentials are present in the environment."""
+    dangerous_patterns = [
+        ("DISCORD_BOT_TOKEN", ["FAKE_TOKENNEVER_REAL_TOKEN"]),  # Start of real token
+        ("GITHUB_TOKEN", ["ghp_FAKE4W2rwp0WycBUp76grs48jLSeorh"]),  # Start of real token  
+        ("DISCORD_USER_ID", ["727687304596160593"]),  # Real user ID
+        ("GITHUB_REPO", ["example-dev/luisquintanilla.me"]),  # Real repo
+    ]
+    
+    for env_var, dangerous_values in dangerous_patterns:
+        current_value = os.environ.get(env_var, "")
+        for dangerous_value in dangerous_values:
+            if dangerous_value in current_value:
+                raise ValueError(
+                    f"SECURITY VIOLATION: Production credential detected!\n"
+                    f"Environment variable '{env_var}' contains production data.\n"
+                    f"This should never happen during testing."
+                )
+
+@pytest.fixture(autouse=True, scope="session")
+def isolate_test_environment():
+    """Automatically isolate test environment for all tests."""
+    # Clear sensitive environment variables
+    for var in SENSITIVE_ENV_VARS:
+        if var in os.environ:
+            del os.environ[var]
+    
+    # Set safe test environment
+    test_env = {
+        "DISCORD_BOT_TOKEN": "FAKE.TEST.TOKEN_NEVER_REAL",
+        "DISCORD_APPLICATION_ID": "123456789012345678", 
+        "DISCORD_PUBLIC_KEY": "f" * 64,
+        "DISCORD_USER_ID": "987654321098765432",
+        "GITHUB_TOKEN": "ghp_FAKE_TEST_TOKEN_NEVER_REAL",
+        "GITHUB_REPO": "test-user/test-repo",
+        "API_KEY": "test_FAKE_api_key_NEVER_REAL",
+        "ENVIRONMENT": "development"  # Use valid environment
+    }
+    
+    with patch.dict(os.environ, test_env, clear=False):
+        yield
+
+@pytest.fixture(autouse=True, scope="function")
+def prevent_dotenv_loading():
+    """Prevent .env file loading during tests."""
+    with patch('dotenv.load_dotenv') as mock_load_dotenv:
+        mock_load_dotenv.return_value = True
+        yield
+
+# Import our application modules AFTER security isolation setup
 from discord_publish_bot.config import AppSettings, DiscordSettings, GitHubSettings, APISettings, PublishingSettings
 from discord_publish_bot.publishing import GitHubClient, PublishingService
 from discord_publish_bot.discord import DiscordInteractionsHandler
@@ -58,31 +134,39 @@ def test_env_vars(monkeypatch):
 
 @pytest.fixture
 def test_settings() -> AppSettings:
-    """Provide test application settings with safe defaults."""
+    """
+    Provide test application settings with completely safe, fake defaults.
+    
+    These credentials are designed to be obviously fake and safe for testing.
+    They will never work with real services.
+    """
+    # Double-check security before creating settings
+    verify_no_production_credentials()
+    
     return AppSettings(
         app_name="Discord Publish Bot Test",
         version="2.0.0-test",
-        environment="development",
+        environment="development",  # Use valid environment value
         log_level="DEBUG",
         discord=DiscordSettings(
-            bot_token="FAKE_TEST_TOKEN_123456789.GhI6jK.abcdefghijklmnopqrstuvwxyz1234567890ABC",
+            bot_token="FAKE_TEST_TOKEN_123456789.FAKE.TEST_TOKEN_NEVER_REAL_SAFE_FOR_TESTING",
             application_id="123456789012345678",
-            public_key="a" * 64,
+            public_key="f" * 64,  # Changed from "a" * 64 to make it more obviously fake
             authorized_user_id="987654321098765432"
         ),
         github=GitHubSettings(
-            token="ghp_test_token_1234567890abcdef",
-            repository="test-user/test-repo",
+            token="ghp_FAKE_TEST_TOKEN_SAFE_1234567890abcdef_NEVER_REAL",
+            repository="test-user/test-repo-safe",
             branch="main"
         ),
         api=APISettings(
-            key="test_api_key_1234567890abcdef",
+            key="test_api_key_SAFE_FAKE_1234567890abcdef_NEVER_REAL",
             host="localhost",
             port=8000,
             endpoint="http://localhost:8000"
         ),
         publishing=PublishingSettings(
-            site_base_url="https://test-site.example.com",
+            site_base_url="https://test-site-safe.example.com",
             default_author="Test Author"
         )
     )
