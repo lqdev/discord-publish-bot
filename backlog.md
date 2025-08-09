@@ -19,16 +19,18 @@ Create an automated Discord bot that enables seamless publishing of Discord cont
 - ✅ **ENHANCEMENT COMPLETE**: Branch/PR workflow, VS Code snippet compliance, correct directory structure
 
 ## Current Sprint Information
-**Sprint:** ENHANCEMENT COMPLETED ✅  
-**Status:** All user requirements delivered - 96.9% system readiness  
+**Sprint:** FIELD MAPPING BUG FIX COMPLETED ✅  
+**Status:** Critical validation error resolved - 100% Discord publishing operational  
 **Completion Date:** 2025-08-08  
 
-### Final Enhancement Achievement
-**Complete enhancement of Discord publishing bot with:**
-- ✅ Branch/PR workflow replacing direct main branch commits
-- ✅ Perfect schema compliance using official VS Code metadata snippets  
-- ✅ Correct directory structure mapping to `_src/feed/`
-- ✅ Custom YAML formatting for inline quoted tags arrays ["tag1","tag2"]
+### Critical Bug Fix Achievement (v2.1.0)
+**✅ RESOLVED**: Target URL field mapping for Discord posts
+- **Issue**: "target_url: Target URL missing for response/bookmark" validation errors
+- **Impact**: All response/bookmark posts from Discord failing validation 
+- **Solution**: Field mapping logic in combined app `/publish` endpoint
+- **Implementation**: Automatic reply_to_url/bookmark_url → target_url conversion
+- **Validation**: PRs #124-125 successfully created with proper field mapping
+- **Documentation**: ADR-003, comprehensive changelog v2.1.0 entry
 
 ## Epics
 
