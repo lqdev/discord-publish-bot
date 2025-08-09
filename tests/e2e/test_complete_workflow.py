@@ -89,7 +89,7 @@ class TestCompleteWorkflow:
             publishing_settings=test_settings.publishing
         )
         
-        discord_bot = DiscordInteractionsHandler(test_settings)
+        discord_bot = DiscordInteractionsHandler(test_settings.discord)
         discord_bot.publishing_service = publishing_service
         
         return {
@@ -376,10 +376,11 @@ class TestErrorRecoveryWorkflows:
         
         publishing_service = PublishingService(
             github_client=failing_github_client,
-            settings=test_settings
+            github_settings=test_settings.github,
+            publishing_settings=test_settings.publishing
         )
         
-        discord_bot = DiscordInteractionsHandler(test_settings)
+        discord_bot = DiscordInteractionsHandler(test_settings.discord)
         discord_bot.publishing_service = publishing_service
         
         return {

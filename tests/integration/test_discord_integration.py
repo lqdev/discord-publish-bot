@@ -20,7 +20,7 @@ class TestDiscordIntegration:
     def discord_bot(self, test_settings, mock_github_client):
         """Create Discord bot with mocked dependencies."""
         with patch('discord_publish_bot.api.dependencies.get_github_client', return_value=mock_github_client):
-            return DiscordInteractionsHandler(test_settings)
+            return DiscordInteractionsHandler(test_settings.discord)
     
     @pytest.mark.asyncio
     async def test_full_interaction_flow_note(self, discord_bot, discord_interaction_payloads):
@@ -305,10 +305,11 @@ class TestDiscordPublishingIntegration:
         
         publishing_service = PublishingService(
             github_client=mock_github_client,
-            settings=test_settings
+            github_settings=test_settings.github,
+            publishing_settings=test_settings.publishing
         )
         
-        bot = DiscordInteractionsHandler(test_settings)
+        bot = DiscordInteractionsHandler(test_settings.discord)
         bot.publishing_service = publishing_service
         
         return bot
