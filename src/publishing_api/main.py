@@ -8,7 +8,7 @@ Implements REST API for GitHub publishing with authentication.
 import logging
 import os
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
@@ -63,6 +63,18 @@ class PublishRequest(BaseModel):
         ..., description="Discord command message with content", min_length=1
     )
     user_id: str = Field(..., description="Discord user ID", min_length=1)
+
+
+class PostRequest(BaseModel):
+    """Request model for structured post publishing."""
+    
+    title: str = Field(..., description="Post title", min_length=1)
+    content: str = Field(..., description="Post content", min_length=1)
+    type: str = Field(..., description="Post type (note, response, bookmark, media)")
+    tags: Optional[List[str]] = Field(None, description="Post tags")
+    reply_to_url: Optional[str] = Field(None, description="URL being replied to (for response posts)")
+    bookmark_url: Optional[str] = Field(None, description="URL being bookmarked (for bookmark posts)")
+    media_url: Optional[str] = Field(None, description="Media URL (for media posts)")
 
 
 class PublishResponse(BaseModel):
@@ -212,6 +224,76 @@ async def publish_post(
         raise HTTPException(status_code=500, detail=f"Publishing failed: {str(e)}")
 
 
+@app.post("/posts", response_model=PublishResponse)
+async def create_post(
+    request: PostRequest,
+    api_key: str = Depends(verify_api_key),
+):
+    """
+    Create a structured post from Discord interactions.
+    
+    Accepts structured post data and publishes to GitHub repository.
+    Maps field names from Discord interactions to publishing API format.
+    """
+    try:
+        logger.info(f"Creating structured post: {request.type}")
+        
+        # Create frontmatter from structured data
+        frontmatter = {
+            "title": request.title,
+            "type": request.type,
+        }
+        
+        # Add tags if provided
+        if request.tags:
+            frontmatter["tags"] = request.tags
+            
+        # Map URL fields correctly based on post type
+        if request.type == "response" and request.reply_to_url:
+            frontmatter["target_url"] = request.reply_to_url
+        elif request.type == "bookmark" and request.bookmark_url:
+            frontmatter["target_url"] = request.bookmark_url
+        elif request.type == "media" and request.media_url:
+            frontmatter["media_url"] = request.media_url
+        
+        # Convert frontmatter to target schema
+        target_frontmatter = publishing_service.convert_to_target_schema(
+            request.type, frontmatter, request.content
+        )
+        
+        # Generate markdown content
+        markdown_content = publishing_service.build_markdown_file(target_frontmatter, request.content)
+        
+        # Generate filename and commit to GitHub
+        filename = publishing_service.generate_filename(request.type, target_frontmatter)
+        
+        # Create commit
+        commit_result = await publishing_service.github_client.create_commit(
+            filename=filename,
+            content=markdown_content,
+            message=f"Add {request.type} post: {request.title}"
+        )
+        
+        # Build response
+        result = {
+            "status": "success",
+            "filepath": filename,
+            "commit_sha": commit_result.get("commit_sha"),
+            "site_url": f"https://{publishing_service.config.github_repo.replace('/', '.github.io/')}/{filename.replace('.md', '.html')}"
+        }
+        
+        logger.info(f"Successfully created post: {filename}")
+        return PublishResponse(**result)
+        
+    except ValueError as e:
+        logger.warning(f"Post creation validation error: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+        
+    except Exception as e:
+        logger.error(f"Post creation error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Post creation failed: {str(e)}")
+
+
 @app.get("/")
 async def root():
     """Root endpoint with API information."""
@@ -219,7 +301,7 @@ async def root():
         "name": "Discord Publishing API",
         "version": "1.0.0",
         "description": "API for publishing Discord posts to GitHub repository",
-        "endpoints": {"health": "/health", "publish": "/publish", "docs": "/docs"},
+        "endpoints": {"health": "/health", "publish": "/publish", "posts": "/posts", "docs": "/docs"},
     }
 
 

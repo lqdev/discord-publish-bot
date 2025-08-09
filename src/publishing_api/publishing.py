@@ -1,5 +1,5 @@
 """
-Publishing service for processing Discord messages and creating markdown files.
+Publishing service for processing Discord posts and creating markdown files.
 
 Implements content processing, frontmatter generation, and GitHub publishing
 with branch/PR workflow and target site schema compliance.
@@ -40,20 +40,20 @@ class PublishingService:
             }
         },
         "response": {
-            "required_fields": ["title", "response_type", "dt_published", "dt_updated"],
-            "optional_fields": ["targeturl", "tags"],
+            "required_fields": ["title", "target_url", "response_type", "dt_published", "dt_updated"],
+            "optional_fields": ["tags"],
             "field_mappings": {
                 "type": "response_type",
                 "date": "dt_published",
             }
         },
         "bookmark": {
-            "required_fields": ["title", "targeturl", "response_type", "dt_published", "dt_updated"],
+            "required_fields": ["title", "target_url", "response_type", "dt_published", "dt_updated"],
             "optional_fields": ["tags"],
             "field_mappings": {
                 "type": "response_type",
                 "date": "dt_published",
-                "url": "targeturl",
+                "url": "target_url",
             }
         },
         "media": {
@@ -250,14 +250,15 @@ class PublishingService:
                     response_type = response_type.strip('"\'')
                 target_frontmatter["response_type"] = response_type
             
-            # Handle target URL (targeturl in your schema)
+            # Handle target URL (target_url in your schema)
             target_url = (source_frontmatter.get("url") or 
+                         source_frontmatter.get("target_url") or 
                          source_frontmatter.get("targeturl") or 
                          source_frontmatter.get("in_reply_to"))
             if target_url:
                 if isinstance(target_url, str):
                     target_url = target_url.strip('"\'')
-                target_frontmatter["targeturl"] = target_url
+                target_frontmatter["target_url"] = target_url
 
         return target_frontmatter
 
@@ -296,10 +297,10 @@ class PublishingService:
 
         # Validate specific post type requirements
         if post_type in ["response", "bookmark"]:
-            has_targeturl = "targeturl" in frontmatter and frontmatter["targeturl"]
+            has_target_url = "target_url" in frontmatter and frontmatter["target_url"]
             results["target_url"] = {
-                "passed": has_targeturl,
-                "message": "Target URL provided" if has_targeturl else "Target URL missing for response/bookmark"
+                "passed": has_target_url,
+                "message": "Target URL provided" if has_target_url else "Target URL missing for response/bookmark"
             }
 
         # Validate title
