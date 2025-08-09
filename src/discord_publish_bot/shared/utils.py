@@ -144,10 +144,10 @@ def sanitize_content(content: str) -> str:
 
 def parse_tags(tags_input: Optional[str]) -> List[str]:
     """
-    Parse comma-separated tags input.
+    Parse comma or semicolon-separated tags input.
     
     Args:
-        tags_input: Comma-separated tags string
+        tags_input: Comma or semicolon-separated tags string
         
     Returns:
         List of cleaned tag strings
@@ -155,7 +155,10 @@ def parse_tags(tags_input: Optional[str]) -> List[str]:
     if not tags_input:
         return []
     
-    tags = [tag.strip() for tag in tags_input.split(',') if tag.strip()]
+    # Split by comma or semicolon
+    import re
+    tags = re.split(r'[,;]', tags_input)
+    tags = [tag.strip() for tag in tags if tag.strip()]
     
     # Remove duplicates while preserving order
     seen = set()

@@ -374,11 +374,14 @@ class DiscordInteractionsHandler:
             # Extract form data
             form_data = self._extract_modal_data(interaction["data"]["components"])
             
+            # Import parse_tags utility
+            from ..shared.utils import parse_tags
+            
             return PostData(
                 title=form_data.get("title", "").strip(),
                 content=form_data.get("content", "").strip(),
                 post_type=post_type,
-                tags=self._parse_tags_from_form(form_data.get("tags", "")),
+                tags=parse_tags(form_data.get("tags", "")),
                 target_url=form_data.get("target_url", "").strip() or None,
                 media_url=form_data.get("media_url", "").strip() or None,
                 created_by=user_id
@@ -390,16 +393,7 @@ class DiscordInteractionsHandler:
     
     def _extract_modal_data(self, components: list) -> Dict[str, str]:
         """Extract data from modal components."""
-        data = {}
-        
-        for action_row in components:
-            for component in action_row["components"]:
-                if component["type"] == ComponentType.TEXT_INPUT:
-                    custom_id = component["custom_id"]
-                    value = component.get("value", "")
-                    data[custom_id] = value
-        
-        return data
+        return extract_component_data(components)
     
     def _extract_user_id(self, interaction: Dict[str, Any]) -> str:
         """Extract user ID from interaction."""
@@ -410,6 +404,26 @@ class DiscordInteractionsHandler:
             return interaction["user"]["id"]
         else:
             raise DiscordCommandError("Could not extract user ID from interaction")
+
+
+def extract_component_data(components: list) -> Dict[str, str]:
+    """Extract data from Discord modal components."""
+    data = {}
+    
+    for action_row in components:
+        for component in action_row["components"]:
+            if component["type"] == ComponentType.TEXT_INPUT:
+                custom_id = component["custom_id"]
+                value = component.get("value", "")
+                data[custom_id] = value
+    
+    return data
+
+
+def extract_component_value(components: list, field_name: str) -> Optional[str]:
+    """Extract a specific field value from Discord modal components."""
+    data = extract_component_data(components)
+    return data.get(field_name)
     
     def _parse_tags_from_form(self, tags_input: str) -> Optional[list[str]]:
         """Parse tags from form input."""

@@ -310,7 +310,7 @@ def publishing_service(test_settings, mock_github_client):
 @pytest.fixture
 def mock_discord_bot(test_settings):
     """Provide a mock Discord bot for testing."""
-    return DiscordInteractionsHandler(test_settings)
+    return DiscordInteractionsHandler(test_settings.discord)
 
 
 # Test markers

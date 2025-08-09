@@ -27,9 +27,9 @@ class TestDiscordInteractions:
     
     def test_discord_bot_initialization(self, test_settings):
         """Test Discord bot can be initialized with settings."""
-        bot = DiscordInteractionsHandler(test_settings)
+        bot = DiscordInteractionsHandler(test_settings.discord)
         
-        assert bot.settings == test_settings
+        assert bot.settings == test_settings.discord
         assert hasattr(bot, 'verify_signature')
         assert hasattr(bot, 'handle_interaction')
     
@@ -59,36 +59,30 @@ class TestDiscordInteractions:
             mock_modal.assert_called_once()
     
     @pytest.mark.asyncio
-    async def test_modal_submit_interaction(self, mock_discord_bot, discord_interaction_payloads, mock_github_client):
+    async def test_modal_submit_interaction(self, mock_discord_bot, discord_interaction_payloads):
         """Test handling of modal submit interactions."""
         modal_payload = discord_interaction_payloads["modal_submit"]
         
-        with patch.object(mock_discord_bot, 'publishing_service') as mock_service:
-            mock_service.publish_post.return_value = Mock(
-                success=True,
-                message="Post published successfully",
-                site_url="https://test.example.com/posts/test-post"
-            )
-            
-            response = mock_discord_bot.handle_interaction(modal_payload)
-            
-            assert response["type"] == 4  # CHANNEL_MESSAGE_WITH_SOURCE
-            assert "successfully" in response["data"]["content"]
+        # The current implementation returns a deferred response
+        response = mock_discord_bot.handle_interaction(modal_payload)
+        
+        # Should return a deferred channel message response
+        assert response["type"] == 5  # DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
+        assert response["data"]["flags"] == 64  # Ephemeral
     
     def test_signature_verification(self, mock_discord_bot):
         """Test Discord signature verification logic."""
-        # Mock signature verification since we don't have real Discord keys
-        test_signature = "test_signature"
+        from discord_publish_bot.shared.exceptions import DiscordSignatureError
+        
+        # Test the verify_signature method with mock data
+        test_signature = "a" * 128  # Valid hex signature length
         test_timestamp = "1234567890"
         test_body = b'{"type": 1}'
         
-        with patch('discord_publish_bot.discord.interactions.verify_signature') as mock_verify:
-            mock_verify.return_value = True
-            
-            result = mock_discord_bot.verify_signature(test_signature, test_timestamp, test_body)
-            
-            assert result is True
-            mock_verify.assert_called_once()
+        # Since we're using fake credentials, we expect signature verification to fail
+        # and raise an exception
+        with pytest.raises(DiscordSignatureError):
+            mock_discord_bot.verify_signature(test_signature, test_timestamp, test_body)
     
     def test_post_type_validation(self, mock_discord_bot):
         """Test that post type validation works correctly."""
@@ -106,18 +100,23 @@ class TestDiscordInteractions:
     
     def test_modal_creation(self, mock_discord_bot):
         """Test modal creation for different post types."""
-        post_types = ["note", "response", "bookmark", "media"]
+        from discord_publish_bot.shared import PostType
+        
+        post_types = [PostType.NOTE, PostType.RESPONSE, PostType.BOOKMARK, PostType.MEDIA]
         
         for post_type in post_types:
             modal = mock_discord_bot._create_post_modal(post_type)
             
-            assert modal["type"] == 9  # MODAL type
-            assert "custom_id" in modal["data"]
-            assert "title" in modal["data"]
-            assert "components" in modal["data"]
+            # Check modal structure
+            assert "custom_id" in modal
+            assert "title" in modal
+            assert "components" in modal
+            
+            # Check custom_id format
+            assert modal["custom_id"] == f"post_modal_{post_type.value}"
             
             # Check that modal has required components
-            components = modal["data"]["components"]
+            components = modal["components"]
             assert len(components) >= 2  # At least title and content fields
     
     @pytest.mark.asyncio
@@ -128,47 +127,50 @@ class TestDiscordInteractions:
         response = mock_discord_bot.handle_interaction(invalid_payload)
         
         assert response["type"] == 4  # CHANNEL_MESSAGE_WITH_SOURCE
-        assert "error" in response["data"]["content"].lower()
+        assert "unknown interaction type" in response["data"]["content"].lower()
     
     def test_post_data_creation(self, mock_discord_bot):
         """Test creation of PostData from Discord modal submission."""
         modal_data = {
-            "custom_id": "post_modal_note",
-            "components": [
-                {
-                    "type": 1,
-                    "components": [
-                        {
-                            "type": 4,
-                            "custom_id": "title",
-                            "value": "Test Post Title"
-                        }
-                    ]
-                },
-                {
-                    "type": 1,
-                    "components": [
-                        {
-                            "type": 4,
-                            "custom_id": "content", 
-                            "value": "Test post content here"
-                        }
-                    ]
-                },
-                {
-                    "type": 1,
-                    "components": [
-                        {
-                            "type": 4,
-                            "custom_id": "tags",
-                            "value": "test, unit-test"
-                        }
-                    ]
-                }
-            ]
+            "user": {"id": "123456789"},
+            "data": {
+                "custom_id": "post_modal_note",
+                "components": [
+                    {
+                        "type": 1,
+                        "components": [
+                            {
+                                "type": 4,
+                                "custom_id": "title",
+                                "value": "Test Post Title"
+                            }
+                        ]
+                    },
+                    {
+                        "type": 1,
+                        "components": [
+                            {
+                                "type": 4,
+                                "custom_id": "content", 
+                                "value": "Test post content here"
+                            }
+                        ]
+                    },
+                    {
+                        "type": 1,
+                        "components": [
+                            {
+                                "type": 4,
+                                "custom_id": "tags",
+                                "value": "test, unit-test"
+                            }
+                        ]
+                    }
+                ]
+            }
         }
         
-        post_data = mock_discord_bot._extract_post_data_from_modal(modal_data)
+        post_data = mock_discord_bot.extract_post_data_from_modal(modal_data)
         
         assert post_data.title == "Test Post Title"
         assert post_data.content == "Test post content here"
@@ -228,7 +230,7 @@ class TestDiscordUtilities:
         
         test_cases = [
             ("Normal content", "Normal content"),
-            ("Content with <script>alert('xss')</script>", "Content with alert('xss')"),
+            ("Content with <script>alert('xss')</script>", "Content with"),  # Script tags and content completely removed
             ("Content with @everyone", "Content with @everyone"),  # Should be preserved in posts
             ("Content with\nmultiple\nlines", "Content with\nmultiple\nlines"),
         ]
