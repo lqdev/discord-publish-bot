@@ -11,6 +11,17 @@ secrets/
 *.p12
 *.pfx
 
+# Application Logs - Project Specific
+discord_bot.log
+publishing_api.log
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
 # Python
 __pycache__/
 *.py[cod]
@@ -44,7 +55,7 @@ env/
 
 # UV Package Manager
 .uv/
-uv.lock
+# Note: uv.lock should be committed for reproducible builds
 
 # PyInstaller
 *.manifest
@@ -246,6 +257,12 @@ temp/
 *~
 *.swp
 *.swo
+
+# Development and Testing Scripts (temporary)
+scripts/test-*.py
+scripts/debug-*.py
+scripts/temp-*.py
+scripts/scratch-*.py
 
 # Project-specific
 # Add any project-specific files that should not be committed
