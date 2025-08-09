@@ -50,7 +50,8 @@ class TestPublishingService:
         
         assert isinstance(result, PublishResult)
         assert result.success is True
-        assert response_data.target_url in str(result)  # Should include target URL in output
+        assert result.filepath.endswith("test-response.md")
+        assert "_src/responses" in result.filepath  # Responses go to responses directory
     
     @pytest.mark.asyncio
     async def test_publish_bookmark_post(self, publishing_service, sample_post_data):
@@ -61,7 +62,8 @@ class TestPublishingService:
         
         assert isinstance(result, PublishResult)
         assert result.success is True
-        assert bookmark_data.target_url in str(result)
+        assert result.filepath.endswith("test-bookmark.md")
+        assert "_src/responses" in result.filepath  # Bookmarks go to responses directory
     
     @pytest.mark.asyncio
     async def test_publish_media_post(self, publishing_service, sample_post_data):
@@ -72,7 +74,8 @@ class TestPublishingService:
         
         assert isinstance(result, PublishResult)
         assert result.success is True
-        assert media_data.media_url in str(result)
+        assert result.filepath.endswith("test-media-post.md")
+        assert "_src/media" in result.filepath  # Media posts go to media directory
     
     def test_frontmatter_generation_note(self, publishing_service, sample_post_data):
         """Test frontmatter generation for note posts."""

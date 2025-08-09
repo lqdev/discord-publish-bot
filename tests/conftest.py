@@ -93,9 +93,10 @@ def mock_github_client():
     """Provide a mock GitHub client for testing."""
     client = Mock(spec=GitHubClient)
     client.check_connectivity = AsyncMock(return_value=True)
-    client.create_file = AsyncMock(return_value={
-        "commit": {"sha": "abc123"},
-        "content": {"download_url": "https://github.com/test/file.md"}
+    # Fix: create_commit should return direct sha/url structure, not nested
+    client.create_commit = AsyncMock(return_value={
+        "sha": "abc123def456",
+        "url": "https://github.com/test/repo/commit/abc123def456"
     })
     client.get_repository_info = Mock(return_value={
         "name": "test-repo",
