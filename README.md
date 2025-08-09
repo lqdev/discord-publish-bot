@@ -183,9 +183,14 @@ cp .env.example .env
 # 2. Generate secure API key
 uv run python -c "import secrets; print(secrets.token_urlsafe(32))"
 
-# 3. Fill in your credentials in .env file
-# See docs/team/security-guidelines.md for detailed setup
+# 3. Follow detailed setup guide
+# See docs/team/credential-setup-guide.md for complete process
+
+# 4. Verify security setup
+uv run python scripts/security-check.py
 ```
+
+**🔧 Need help setting up credentials?** See our comprehensive [Credential Setup Guide](docs/team/credential-setup-guide.md) for step-by-step Discord Developer Portal setup, GitHub token generation, and security configuration.
 
 ### Security Features
 - All API endpoints require authentication via API key
