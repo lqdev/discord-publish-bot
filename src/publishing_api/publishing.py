@@ -402,6 +402,7 @@ class PublishingService:
     def build_markdown_file(self, frontmatter: Dict[str, Any], content: str) -> str:
         """
         Build complete markdown file with YAML frontmatter.
+        Forces tags to use inline array format: ["tag1", "tag2"]
 
         Args:
             frontmatter: Frontmatter dictionary
@@ -410,14 +411,42 @@ class PublishingService:
         Returns:
             Complete markdown file content
         """
-        # Generate YAML frontmatter with proper formatting
+        # Generate YAML frontmatter and manually format tags as inline array
+        import io
+        
+        # Make a copy to avoid modifying original
+        fm_copy = frontmatter.copy()
+        
+        # Extract tags for special formatting
+        tags = fm_copy.pop('tags', [])
+        
+        # Generate YAML for non-tags fields
         yaml_content = yaml.safe_dump(
-            frontmatter, 
-            sort_keys=False, 
-            allow_unicode=True, 
+            fm_copy,
+            sort_keys=False,
+            allow_unicode=True,
             default_flow_style=False,
-            width=float('inf')  # Prevent line wrapping
+            width=float('inf')
         )
+        
+        # Manually format tags as inline quoted array
+        if tags:
+            quoted_tags = [f'"{tag}"' for tag in tags]
+            tags_line = f"tags: [{', '.join(quoted_tags)}]\n"
+        else:
+            tags_line = "tags: []\n"
+        
+        # Insert tags line in the appropriate position
+        lines = yaml_content.split('\n')
+        # Insert tags after title if present, otherwise at the beginning
+        insert_pos = 1  # After title usually
+        for i, line in enumerate(lines):
+            if line.startswith('title:'):
+                insert_pos = i + 1
+                break
+        
+        lines.insert(insert_pos, tags_line.rstrip())
+        yaml_content = '\n'.join(lines)
 
         # Combine frontmatter and content
         return f"---\n{yaml_content}---\n\n{content}"
