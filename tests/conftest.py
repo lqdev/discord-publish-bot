@@ -12,7 +12,7 @@ from typing import Dict, Any, AsyncGenerator
 from unittest.mock import Mock, AsyncMock
 
 # Import our application modules
-from discord_publish_bot.config import AppSettings
+from discord_publish_bot.config import AppSettings, DiscordSettings, GitHubSettings, APISettings, PublishingSettings
 from discord_publish_bot.publishing import GitHubClient, PublishingService
 from discord_publish_bot.discord import DiscordInteractionsHandler
 from discord_publish_bot.shared import PostData, PostType
@@ -31,6 +31,32 @@ def event_loop():
 
 
 @pytest.fixture
+def test_env_vars(monkeypatch):
+    """Provide test environment variables."""
+    test_vars = {
+        "DISCORD_BOT_TOKEN": "FAKE_TEST_TOKEN_123456789.GhI6jK.abcdefghijklmnopqrstuvwxyz1234567890ABC",
+        "DISCORD_APPLICATION_ID": "123456789012345678", 
+        "DISCORD_PUBLIC_KEY": "a" * 64,
+        "DISCORD_USER_ID": "987654321098765432",
+        "GITHUB_TOKEN": "ghp_test_token_1234567890abcdef",
+        "GITHUB_REPO": "test-user/test-repo",
+        "GITHUB_BRANCH": "main",
+        "API_KEY": "test_api_key_1234567890abcdef",
+        "API_HOST": "localhost",
+        "API_PORT": "8000",
+        "SITE_BASE_URL": "https://test-site.example.com",
+        "DEFAULT_AUTHOR": "Test Author",
+        "ENVIRONMENT": "development",
+        "LOG_LEVEL": "DEBUG"
+    }
+    
+    for key, value in test_vars.items():
+        monkeypatch.setenv(key, value)
+    
+    return test_vars
+
+
+@pytest.fixture
 def test_settings() -> AppSettings:
     """Provide test application settings with safe defaults."""
     return AppSettings(
@@ -38,23 +64,24 @@ def test_settings() -> AppSettings:
         version="2.0.0-test",
         environment="development",
         log_level="DEBUG",
-        discord=AppSettings.DiscordSettings(
-            bot_token="test_bot_token",
+        discord=DiscordSettings(
+            bot_token="FAKE_TEST_TOKEN_123456789.GhI6jK.abcdefghijklmnopqrstuvwxyz1234567890ABC",
             application_id="123456789012345678",
             public_key="a" * 64,
+            authorized_user_id="987654321098765432"
         ),
-        github=AppSettings.GitHubSettings(
+        github=GitHubSettings(
             token="ghp_test_token_1234567890abcdef",
             repository="test-user/test-repo",
             branch="main"
         ),
-        api=AppSettings.APISettings(
+        api=APISettings(
             key="test_api_key_1234567890abcdef",
             host="localhost",
             port=8000,
             endpoint="http://localhost:8000"
         ),
-        publishing=AppSettings.PublishingSettings(
+        publishing=PublishingSettings(
             site_base_url="https://test-site.example.com",
             default_author="Test Author"
         )
