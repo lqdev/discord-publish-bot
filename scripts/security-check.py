@@ -78,6 +78,44 @@ def check_credentials():
     if found_placeholders:
         return False, f"Found placeholder values: {found_placeholders}"
     
+    # Additional Discord-specific validation
+    issues = []
+    
+    # Check Discord bot token format (should start with specific pattern)
+    if "DISCORD_BOT_TOKEN=" in content:
+        token_line = [line for line in content.split('\n') if line.startswith('DISCORD_BOT_TOKEN=')]
+        if token_line:
+            token_value = token_line[0].split('=', 1)[1].strip()
+            if len(token_value) < 50:  # Discord bot tokens are typically 59+ characters
+                issues.append("Discord bot token appears too short")
+    
+    # Check Discord user ID format (should be numeric snowflake)
+    if "DISCORD_USER_ID=" in content:
+        user_id_line = [line for line in content.split('\n') if line.startswith('DISCORD_USER_ID=')]
+        if user_id_line:
+            user_id_value = user_id_line[0].split('=', 1)[1].strip()
+            if not user_id_value.isdigit() or len(user_id_value) < 17:
+                issues.append("Discord user ID should be 17+ digit number")
+    
+    # Check API key length
+    if "API_KEY=" in content:
+        api_key_line = [line for line in content.split('\n') if line.startswith('API_KEY=')]
+        if api_key_line:
+            api_key_value = api_key_line[0].split('=', 1)[1].strip()
+            if len(api_key_value) < 32:
+                issues.append("API key should be at least 32 characters")
+    
+    # Check GitHub repo format
+    if "GITHUB_REPO=" in content:
+        repo_line = [line for line in content.split('\n') if line.startswith('GITHUB_REPO=')]
+        if repo_line:
+            repo_value = repo_line[0].split('=', 1)[1].strip()
+            if '/' not in repo_value or repo_value.count('/') != 1:
+                issues.append("GitHub repo should be in format 'username/repository'")
+    
+    if issues:
+        return False, f"Credential format issues: {', '.join(issues)}"
+    
     return True, "No placeholder values found in .env"
 
 
