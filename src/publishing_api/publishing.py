@@ -23,7 +23,7 @@ class PublishingService:
 
     # Content type to source directory mapping (luisquintanilla.me structure)
     CONTENT_TYPE_DIRECTORIES = {
-        "note": "_src/notes",
+        "note": "_src/feed",
         "response": "_src/responses", 
         "bookmark": "_src/responses",  # Bookmarks are responses with response_type
         "media": "_src/media",
@@ -165,7 +165,8 @@ class PublishingService:
         self, post_type: str, source_frontmatter: Dict[str, Any], content: str
     ) -> Dict[str, Any]:
         """
-        Convert source frontmatter to target site schema compliance.
+        Convert frontmatter to match luisquintanilla.me schema exactly.
+        Based on VS Code metadata snippets.
 
         Args:
             post_type: Type of post
@@ -175,91 +176,88 @@ class PublishingService:
         Returns:
             Converted frontmatter following target site patterns
         """
-        schema = self.FRONTMATTER_SCHEMAS.get(post_type, {})
         target_frontmatter = {}
 
-        # Handle date conversion to target site format
+        # Handle date conversion to target site format: "YYYY-MM-DD HH:MM -05:00"
         source_date = source_frontmatter.get("date")
         if source_date:
-            # Convert from ISO format to target site format
-            if isinstance(source_date, str):
-                try:
-                    dt = datetime.fromisoformat(source_date.replace("Z", "+00:00"))
-                    # Target site uses: "2025-08-08 10:30 -05:00" format
-                    if post_type in ["response", "bookmark"]:
-                        # Both dt_published and dt_updated use same format
-                        target_frontmatter["dt_published"] = dt.strftime("%Y-%m-%d %H:%M")
-                        target_frontmatter["dt_updated"] = dt.strftime("%Y-%m-%d %H:%M -05:00")
-                    else:
-                        target_frontmatter["published_date"] = dt.strftime("%Y-%m-%d %H:%M -05:00")
-                except ValueError:
-                    # Fallback to current time
-                    now = datetime.now(timezone.utc)
-                    if post_type in ["response", "bookmark"]:
-                        target_frontmatter["dt_published"] = now.strftime("%Y-%m-%d %H:%M")
-                        target_frontmatter["dt_updated"] = now.strftime("%Y-%m-%d %H:%M -05:00")
-                    else:
-                        target_frontmatter["published_date"] = now.strftime("%Y-%m-%d %H:%M -05:00")
+            try:
+                dt = datetime.fromisoformat(source_date.replace("Z", "+00:00"))
+                formatted_date = dt.strftime("%Y-%m-%d %H:%M -05:00")
+            except ValueError:
+                # Fallback to current time
+                now = datetime.now(timezone.utc)
+                formatted_date = now.strftime("%Y-%m-%d %H:%M -05:00")
+        else:
+            now = datetime.now(timezone.utc)
+            formatted_date = now.strftime("%Y-%m-%d %H:%M -05:00")
 
-        # Handle post_type field
-        if post_type == "note":
-            target_frontmatter["post_type"] = "note"
-        elif post_type == "media":
-            target_frontmatter["post_type"] = "note"  # Media posts are notes with media blocks
-        elif post_type in ["response", "bookmark"]:
-            # For responses/bookmarks, response_type determines the specific type
-            source_response_type = source_frontmatter.get("response_type", "bookmark" if post_type == "bookmark" else "reply")
-            # Remove quotes from response_type
-            if isinstance(source_response_type, str):
-                source_response_type = source_response_type.strip('"\'')
-            target_frontmatter["response_type"] = source_response_type
-
-        # Handle title - remove extra quotes
+        # Handle title - clean and quote
         title = source_frontmatter.get("title")
         if title:
-            # Remove surrounding quotes if present
+            # Remove any existing quotes
             if isinstance(title, str):
                 title = title.strip('"\'')
         elif content:
             # Generate title from content
             first_line = content.strip().split("\n")[0]
             title = re.sub(r"[#*`_\[\]()]", "", first_line)[:80].strip()
-        target_frontmatter["title"] = title or "Untitled"
+        
+        title = title or "Untitled"
+        target_frontmatter["title"] = title  # Keep as string, YAML will handle quoting
 
-        # Handle targeturl for responses/bookmarks
-        if post_type in ["response", "bookmark"]:
-            url = source_frontmatter.get("url") or source_frontmatter.get("targeturl")
-            if url:
-                # Remove quotes from URL
-                if isinstance(url, str):
-                    url = url.strip('"\'')
-                target_frontmatter["targeturl"] = url
-
-        # Handle in_reply_to for responses
-        in_reply_to = source_frontmatter.get("in_reply_to")
-        if in_reply_to:
-            # Remove quotes from URL
-            if isinstance(in_reply_to, str):
-                in_reply_to = in_reply_to.strip('"\'')
-            target_frontmatter["in_reply_to"] = in_reply_to
-
-        # Handle tags
+        # Handle tags - always as array format ["tag1", "tag2"]
         tags = source_frontmatter.get("tags", [])
         if isinstance(tags, str):
             # Convert string to list
-            tags = [tag.strip() for tag in tags.split(",") if tag.strip()]
+            tags = [tag.strip().strip('"\'') for tag in tags.split(",") if tag.strip()]
         if not tags:
             # Add default tags
             tags = ["discord", "automated"]
         target_frontmatter["tags"] = tags
 
-        # Copy other fields that don't need conversion (but clean quotes)
-        for key, value in source_frontmatter.items():
-            if key not in ["date", "type", "slug", "title", "tags", "url", "response_type", "in_reply_to"]:
-                # Clean quotes from string values
-                if isinstance(value, str):
-                    value = value.strip('"\'')
-                target_frontmatter[key] = value
+        # Post type specific formatting based on VS Code snippets
+        if post_type == "note":
+            # Note Feed metadata format
+            target_frontmatter["post_type"] = "note"
+            target_frontmatter["published_date"] = formatted_date
+
+        elif post_type == "media":
+            # Media posts use photo format for images
+            target_frontmatter["post_type"] = "photo"
+            target_frontmatter["published_date"] = formatted_date
+            
+            # Add media-specific fields if available
+            media_url = source_frontmatter.get("media_url")
+            if media_url:
+                target_frontmatter["media_url"] = media_url.strip('"\'') if isinstance(media_url, str) else media_url
+            
+            alt_text = source_frontmatter.get("alt_text")
+            if alt_text:
+                target_frontmatter["alt_text"] = alt_text.strip('"\'') if isinstance(alt_text, str) else alt_text
+
+        elif post_type in ["response", "bookmark"]:
+            # Response/Bookmark metadata format
+            target_frontmatter["dt_published"] = formatted_date
+            target_frontmatter["dt_updated"] = formatted_date
+            
+            # Set response_type
+            if post_type == "bookmark":
+                target_frontmatter["response_type"] = "bookmark"
+            else:
+                response_type = source_frontmatter.get("response_type", "reply")
+                if isinstance(response_type, str):
+                    response_type = response_type.strip('"\'')
+                target_frontmatter["response_type"] = response_type
+            
+            # Handle target URL (targeturl in your schema)
+            target_url = (source_frontmatter.get("url") or 
+                         source_frontmatter.get("targeturl") or 
+                         source_frontmatter.get("in_reply_to"))
+            if target_url:
+                if isinstance(target_url, str):
+                    target_url = target_url.strip('"\'')
+                target_frontmatter["targeturl"] = target_url
 
         return target_frontmatter
 

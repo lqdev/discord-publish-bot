@@ -62,7 +62,7 @@ Key features being tested:
 - Directory structure mapping to _src/ organization
 
 All systems operational and ready for validation.""",
-            "expected_directory": "_src/notes"
+            "expected_directory": "_src/feed"
         },
         {
             "type": "response", 
@@ -359,7 +359,7 @@ Updated system architecture diagram showing the enhanced Discord publishing bot 
     print("-" * 40)
     
     expected_structure = {
-        "note": "_src/notes",
+        "note": "_src/feed",
         "response": "_src/responses",
         "bookmark": "_src/responses",  # Bookmarks are responses in luisquintanilla.me
         "media": "_src/media",
