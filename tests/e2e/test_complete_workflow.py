@@ -85,7 +85,8 @@ class TestCompleteWorkflow:
         """Create a complete system with real components."""
         publishing_service = PublishingService(
             github_client=real_github_client,
-            settings=test_settings
+            github_settings=test_settings.github,
+            publishing_settings=test_settings.publishing
         )
         
         discord_bot = DiscordInteractionsHandler(test_settings)
