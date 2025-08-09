@@ -46,7 +46,10 @@ class TestCompleteWorkflow:
     def real_github_client(self, test_settings, real_git_repo):
         """Create a GitHub client that works with local git repo."""
         # Mock the GitHub API calls but use real file operations
-        client = GitHubClient(test_settings.github)
+        client = GitHubClient(
+            token=test_settings.github.token,
+            repository=test_settings.github.repository
+        )
         
         # Override the create_file method to work with local repo
         async def mock_create_file(filename, content, commit_message, branch="main"):

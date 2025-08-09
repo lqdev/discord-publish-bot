@@ -101,7 +101,7 @@ class DiscordBot(commands.Bot):
 
     def is_authorized(self, user_id: int) -> bool:
         """Check if user is authorized to use the bot."""
-        return str(user_id) == self.settings.authorized_user_id
+        return str(user_id) == self.settings.discord.authorized_user_id
 
     async def start_bot(self) -> None:
         """Start the bot with error handling."""

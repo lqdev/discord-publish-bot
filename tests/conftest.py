@@ -156,6 +156,10 @@ def discord_interaction_payloads() -> Dict[str, Dict[str, Any]]:
             "application_id": "123456789012345678",
             "token": "test_token",
             "version": 1,
+            "user": {
+                "id": "987654321098765432",
+                "username": "testuser"
+            },
             "data": {
                 "id": "test_command_id",
                 "name": "post",
@@ -175,6 +179,10 @@ def discord_interaction_payloads() -> Dict[str, Dict[str, Any]]:
             "application_id": "123456789012345678",
             "token": "test_token",
             "version": 1,
+            "user": {
+                "id": "987654321098765432",
+                "username": "testuser"
+            },
             "data": {
                 "custom_id": "post_modal_note",
                 "components": [

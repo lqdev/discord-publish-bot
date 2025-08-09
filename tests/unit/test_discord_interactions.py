@@ -38,7 +38,7 @@ class TestDiscordInteractions:
         """Test handling of Discord ping interactions."""
         ping_payload = discord_interaction_payloads["ping"]
         
-        response = await mock_discord_bot.handle_interaction(ping_payload)
+        response = mock_discord_bot.handle_interaction(ping_payload)
         
         assert response["type"] == 1  # PONG response type
     
@@ -53,7 +53,7 @@ class TestDiscordInteractions:
                 "data": {"custom_id": "post_modal_note", "title": "Create Note"}
             }
             
-            response = await mock_discord_bot.handle_interaction(command_payload)
+            response = mock_discord_bot.handle_interaction(command_payload)
             
             assert response["type"] == 9  # MODAL response
             mock_modal.assert_called_once()
@@ -70,7 +70,7 @@ class TestDiscordInteractions:
                 site_url="https://test.example.com/posts/test-post"
             )
             
-            response = await mock_discord_bot.handle_interaction(modal_payload)
+            response = mock_discord_bot.handle_interaction(modal_payload)
             
             assert response["type"] == 4  # CHANNEL_MESSAGE_WITH_SOURCE
             assert "successfully" in response["data"]["content"]
@@ -125,7 +125,7 @@ class TestDiscordInteractions:
         """Test error handling in interaction processing."""
         invalid_payload = {"type": 999}  # Invalid interaction type
         
-        response = await mock_discord_bot.handle_interaction(invalid_payload)
+        response = mock_discord_bot.handle_interaction(invalid_payload)
         
         assert response["type"] == 4  # CHANNEL_MESSAGE_WITH_SOURCE
         assert "error" in response["data"]["content"].lower()
