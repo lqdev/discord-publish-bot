@@ -15,9 +15,17 @@ from discord import app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from .api_client import PublishingAPIClient
-from .config import BotConfig
-from .modals import BookmarkModal, MediaModal, NoteModal, ResponseModal
+# Use absolute imports for better compatibility
+try:
+    # Try absolute import first (when run as module)
+    from src.discord_bot.api_client import PublishingAPIClient
+    from src.discord_bot.config import BotConfig
+    from src.discord_bot.modals import BookmarkModal, MediaModal, NoteModal, ResponseModal
+except ImportError:
+    # Fall back to relative imports (when run from package)
+    from .api_client import PublishingAPIClient
+    from .config import BotConfig
+    from .modals import BookmarkModal, MediaModal, NoteModal, ResponseModal
 
 # Load environment variables
 load_dotenv()

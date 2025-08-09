@@ -25,6 +25,10 @@ class APIConfig:
     @classmethod
     def from_env(cls) -> "APIConfig":
         """Create configuration from environment variables."""
+        # Load .env file first to ensure .env values override system env
+        from dotenv import load_dotenv
+        load_dotenv(override=True)
+        
         # Required configuration
         api_key = os.getenv("API_KEY")
         discord_user_id = os.getenv("DISCORD_USER_ID")
