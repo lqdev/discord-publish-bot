@@ -12,24 +12,54 @@
 - [ ] Review `docs/adr/adr-004-azure-container-apps-deployment.md` (architectural decisions)
 - [ ] Check updated `backlog.md` for current project status
 
-## 🎯 **Phase 1: Container Optimization (1-2 hours)**
+## 🎯 **Phase 1: Container Optimization (1-2 hours)** ✅ COMPLETED WITH LOCAL TESTING SUCCESS
 
-### Dockerfile Enhancement
-- [ ] Review current `Dockerfile` created during cleanup
-- [ ] Research Azure Container Apps best practices using available tools
-- [ ] Implement multi-stage build for production optimization
-- [ ] Add non-root user for security
-- [ ] Configure proper health check endpoints
+### Dockerfile Enhancement ✅ COMPLETED
+- [x] Review current `Dockerfile` created during cleanup
+- [x] **Research Azure Container Apps best practices** - ✅ DONE (Microsoft Docs + Perplexity analysis)
+- [x] **Implement multi-stage build** - ✅ OPTIMIZED (production image 224MB vs 1GB+)
+- [x] **Add non-root user for security** - ✅ IMPLEMENTED (UID/GID 1000)
+- [x] **Configure proper health check endpoints** - ✅ ENHANCED (60s start period, comprehensive validation)
 
-### Environment Configuration
-- [ ] Create `.env.production.example` template
-- [ ] Create `docker-compose.yml` for local testing
-- [ ] Optimize `.dockerignore` for build context
+### Environment Configuration ✅ COMPLETED
+- [x] **Create `.env.production.example` template** - ✅ COMPREHENSIVE (includes Azure-specific config)
+- [x] **Create `docker-compose.yml` for local testing** - ✅ PRODUCTION-LIKE (resource limits matching Azure)
+- [x] **Optimize `.dockerignore`** - ✅ MINIMAL BUILD CONTEXT (improved performance)
 
-### Validation
-- [ ] Build Docker image locally: `docker build -t discord-publish-bot .`
-- [ ] Test container locally: `docker run -p 8000:8000 discord-publish-bot`
-- [ ] Verify health endpoint responds correctly
+### **🔍 CRITICAL FINDING**: Background Task Challenge - ✅ RESEARCHED & PLANNED
+**Industry Research Insight**: Serverless platforms may terminate during GitHub publishing operations.
+**For Your Use Case**: Low-traffic, mobile posting = lower risk, but monitoring planned.
+**Recommended Solution**: ✅ Start with Azure Container Apps, monitor completion rates
+- [x] **Deploy with current architecture** (async GitHub operations) - Ready for Phase 2
+- [ ] **Monitor**: Track GitHub publishing success rates in logs - Phase 4 activity
+- [ ] **Fallback**: If issues arise, switch to Azure App Service (guaranteed completion) - Backup plan
+
+### Validation ✅ COMPLETED WITH LOCAL TESTING SUCCESS
+- [x] **Build with proper naming**: `.\scripts\docker-naming.ps1 -Build` ✅ SUCCESS (224MB optimized image)
+- [x] **Test container locally**: ✅ SUCCESS - Container runs with test credentials
+- [x] **Verify health endpoint**: ✅ SUCCESS - `/health` returns healthy status
+- [x] **Verify API endpoints**: ✅ SUCCESS - Root `/` and `/docs` accessible
+- [x] **Docker naming strategy implemented**: Full 2025 best practices with semantic versioning
+
+**🎉 LOCAL TESTING BREAKTHROUGH**: Successfully resolved credential validation issues!
+- **Working Test Command**: `docker run` with properly formatted test credentials
+- **Health Check**: `{"status":"healthy","version":"2.0.0","environment":"development"}`
+- **API Documentation**: Available at `/docs` (development mode)
+- **Security**: Proper validation prevents production credential leakage
+
+### **🏷️ PRODUCTION NAMING STRATEGY** ✅ IMPLEMENTED
+Following 2025 best practices for Azure Container Registry:
+
+**Registry**: `yourname-discord-bot.azurecr.io` (globally unique, 5-50 chars)
+**Repository**: `personal/discord-publish-bot` (team/project pattern)
+**Current Image**: `your-discord-bot.azurecr.io/personal/discord-publish-bot:v0.2.0-5cfbd23-dev` (224MB)
+
+**✅ Container Validation Results**:
+- ✅ Multi-stage build optimization: 224MB (vs 1GB+ unoptimized)
+- ✅ Non-root user security: UID/GID 1000 
+- ✅ Health check endpoint: /health with 60s start period
+- ✅ Production credential validation: Correctly rejects fake credentials
+- ✅ 2025 naming conventions: Semantic versioning + Git traceability
 
 ## 🚀 **Phase 2: Azure Resource Setup (2-3 hours)**
 

@@ -1,0 +1,85 @@
+# Docker Compose for Discord Publish Bot - Local Production Testing
+# Use this to test the production Docker image locally before Azure deployment
+
+version: '3.8'
+
+services:
+  discord-publish-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: discord-publish-bot-local
+    ports:
+      - "8000:8000"
+    environment:
+      # Override for local testing
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      # Load from .env file (create from .env.production.example)
+    env_file:
+      - .env.local
+    volumes:
+      # Mount logs for local debugging (remove in production)
+      - ./logs:/app/logs
+    networks:
+      - discord-bot-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    # Resource limits for testing Azure Container Apps constraints
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # Optional: Local monitoring stack for testing
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus-local
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - discord-bot-network
+    profiles:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana-local
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - discord-bot-network
+    profiles:
+      - monitoring
+
+networks:
+  discord-bot-network:
+    driver: bridge
+
+volumes:
+  grafana-data:
+
+# Usage:
+# 1. Copy .env.production.example to .env.local and fill in values
+# 2. Build and run: docker-compose up --build
+# 3. Test health: curl http://localhost:8000/health
+# 4. Test Discord interactions: Use Discord Developer Portal
+# 5. With monitoring: docker-compose --profile monitoring up --build
