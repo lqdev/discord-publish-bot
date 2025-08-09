@@ -1,0 +1,305 @@
+{
+  "discord_interactions": {
+    "ping": {
+      "type": 1,
+      "id": "test_ping_interaction_12345",
+      "application_id": "123456789012345678",
+      "token": "test_interaction_token_abcdef",
+      "version": 1
+    },
+    "slash_command_note": {
+      "type": 2,
+      "id": "test_command_interaction_note",
+      "application_id": "123456789012345678",
+      "token": "test_interaction_token_note",
+      "version": 1,
+      "data": {
+        "id": "test_command_id_note",
+        "name": "post",
+        "type": 1,
+        "options": [
+          {
+            "name": "type",
+            "type": 3,
+            "value": "note"
+          }
+        ]
+      },
+      "guild_id": "test_guild_12345",
+      "channel_id": "test_channel_12345",
+      "member": {
+        "user": {
+          "id": "test_user_12345",
+          "username": "testuser",
+          "discriminator": "0001"
+        }
+      }
+    },
+    "slash_command_response": {
+      "type": 2,
+      "id": "test_command_interaction_response",
+      "application_id": "123456789012345678",
+      "token": "test_interaction_token_response",
+      "version": 1,
+      "data": {
+        "id": "test_command_id_response",
+        "name": "post",
+        "type": 1,
+        "options": [
+          {
+            "name": "type",
+            "type": 3,
+            "value": "response"
+          }
+        ]
+      },
+      "guild_id": "test_guild_12345",
+      "channel_id": "test_channel_12345",
+      "member": {
+        "user": {
+          "id": "test_user_12345",
+          "username": "testuser",
+          "discriminator": "0001"
+        }
+      }
+    },
+    "modal_submit_note": {
+      "type": 5,
+      "id": "test_modal_interaction_note",
+      "application_id": "123456789012345678",
+      "token": "test_modal_token_note",
+      "version": 1,
+      "data": {
+        "custom_id": "post_modal_note",
+        "components": [
+          {
+            "type": 1,
+            "components": [
+              {
+                "type": 4,
+                "custom_id": "title",
+                "value": "Test Note Title"
+              }
+            ]
+          },
+          {
+            "type": 1,
+            "components": [
+              {
+                "type": 4,
+                "custom_id": "content",
+                "value": "This is a test note content created for testing purposes."
+              }
+            ]
+          },
+          {
+            "type": 1,
+            "components": [
+              {
+                "type": 4,
+                "custom_id": "tags",
+                "value": "test, note, automation"
+              }
+            ]
+          }
+        ]
+      },
+      "guild_id": "test_guild_12345",
+      "channel_id": "test_channel_12345",
+      "member": {
+        "user": {
+          "id": "test_user_12345",
+          "username": "testuser",
+          "discriminator": "0001"
+        }
+      }
+    },
+    "modal_submit_response": {
+      "type": 5,
+      "id": "test_modal_interaction_response",
+      "application_id": "123456789012345678",
+      "token": "test_modal_token_response",
+      "version": 1,
+      "data": {
+        "custom_id": "post_modal_response",
+        "components": [
+          {
+            "type": 1,
+            "components": [
+              {
+                "type": 4,
+                "custom_id": "title",
+                "value": "Re: Great Article"
+              }
+            ]
+          },
+          {
+            "type": 1,
+            "components": [
+              {
+                "type": 4,
+                "custom_id": "content",
+                "value": "Thanks for sharing this insightful article!"
+              }
+            ]
+          },
+          {
+            "type": 1,
+            "components": [
+              {
+                "type": 4,
+                "custom_id": "target_url",
+                "value": "https://example.com/great-article"
+              }
+            ]
+          },
+          {
+            "type": 1,
+            "components": [
+              {
+                "type": 4,
+                "custom_id": "tags",
+                "value": "response, discussion, web"
+              }
+            ]
+          }
+        ]
+      },
+      "guild_id": "test_guild_12345",
+      "channel_id": "test_channel_12345",
+      "member": {
+        "user": {
+          "id": "test_user_12345",
+          "username": "testuser",
+          "discriminator": "0001"
+        }
+      }
+    },
+    "modal_submit_bookmark": {
+      "type": 5,
+      "id": "test_modal_interaction_bookmark",
+      "application_id": "123456789012345678",
+      "token": "test_modal_token_bookmark",
+      "version": 1,
+      "data": {
+        "custom_id": "post_modal_bookmark",
+        "components": [
+          {
+            "type": 1,
+            "components": [
+              {
+                "type": 4,
+                "custom_id": "title",
+                "value": "Useful Python Testing Guide"
+              }
+            ]
+          },
+          {
+            "type": 1,
+            "components": [
+              {
+                "type": 4,
+                "custom_id": "content",
+                "value": "Comprehensive guide covering pytest, fixtures, and testing best practices."
+              }
+            ]
+          },
+          {
+            "type": 1,
+            "components": [
+              {
+                "type": 4,
+                "custom_id": "target_url",
+                "value": "https://realpython.com/pytest-python-testing/"
+              }
+            ]
+          },
+          {
+            "type": 1,
+            "components": [
+              {
+                "type": 4,
+                "custom_id": "tags",
+                "value": "bookmark, python, testing, pytest"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "github_responses": {
+    "create_file_success": {
+      "commit": {
+        "sha": "abc123def456ghi789",
+        "author": {
+          "name": "Test User",
+          "email": "test@example.com",
+          "date": "2025-08-09T12:30:45Z"
+        },
+        "message": "Add new post: Test Note Title"
+      },
+      "content": {
+        "name": "test-note-title.md",
+        "path": "posts/test-note-title.md",
+        "sha": "def456abc789ghi123",
+        "size": 512,
+        "url": "https://api.github.com/repos/testuser/testrepo/contents/posts/test-note-title.md",
+        "html_url": "https://github.com/testuser/testrepo/blob/main/posts/test-note-title.md",
+        "download_url": "https://raw.githubusercontent.com/testuser/testrepo/main/posts/test-note-title.md"
+      }
+    },
+    "repository_info": {
+      "id": 123456789,
+      "name": "testrepo",
+      "full_name": "testuser/testrepo",
+      "owner": {
+        "login": "testuser",
+        "id": 12345
+      },
+      "private": false,
+      "html_url": "https://github.com/testuser/testrepo",
+      "description": "Test repository for Discord Publish Bot",
+      "default_branch": "main"
+    }
+  },
+  "api_responses": {
+    "health_success": {
+      "status": "healthy",
+      "version": "2.0.0",
+      "environment": "development",
+      "discord_configured": true,
+      "github_configured": true,
+      "github_connectivity": true,
+      "timestamp": "2025-08-09T12:30:45.123456"
+    },
+    "health_degraded": {
+      "status": "degraded",
+      "version": "2.0.0",
+      "environment": "development",
+      "discord_configured": true,
+      "github_configured": true,
+      "github_connectivity": false,
+      "timestamp": "2025-08-09T12:30:45.123456"
+    },
+    "publish_success": {
+      "success": true,
+      "message": "Post published successfully",
+      "filename": "test-note-title.md",
+      "filepath": "posts/test-note-title.md",
+      "commit_sha": "abc123def456ghi789",
+      "branch_name": "main",
+      "file_url": "https://github.com/testuser/testrepo/blob/main/posts/test-note-title.md",
+      "site_url": "https://testuser.github.io/testrepo/posts/test-note-title"
+    },
+    "publish_failure": {
+      "success": false,
+      "message": "Failed to publish post: GitHub API error",
+      "error_code": "GITHUB_API_ERROR",
+      "error_details": {
+        "status_code": 401,
+        "response": "Bad credentials"
+      }
+    }
+  }
+}

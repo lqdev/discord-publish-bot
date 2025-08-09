@@ -8,9 +8,8 @@ import asyncio
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.publishing_api.config import APIConfig
-from src.publishing_api.github_client import GitHubClient
-from src.publishing_api.publishing import PublishingService
+from discord_publish_bot.config import AppSettings
+from discord_publish_bot.publishing import GitHubClient, PublishingService
 
 
 class TestEnhancedPublishing:
@@ -19,7 +18,7 @@ class TestEnhancedPublishing:
     @pytest.fixture
     def mock_config(self):
         """Create mock configuration."""
-        config = MagicMock(spec=APIConfig)
+        config = MagicMock(spec=AppSettings)
         config.github_token = "test_token"
         config.github_repo = "test/repo"
         config.github_branch = "main"

@@ -39,8 +39,11 @@ dev = [
     "pytest==7.4.3",
     "pytest-asyncio==0.21.1",
     "pytest-cov==4.1.0",
+    "pytest-mock==3.12.0",
     "black==23.11.0",
     "isort==5.12.0",
+    "httpx==0.25.2",  # For FastAPI test client
+    "aiofiles==23.2.1",  # For async file operations in tests
 ]
 
 monitoring = [
@@ -101,17 +104,30 @@ ensure_newline_before_comments = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-python_files = ["test_*.py", "*_test.py"]
+python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = [
+    "-v",
+    "--tb=short",
     "--strict-markers",
-    "--strict-config",
-    "--verbose",
+    "--disable-warnings",
+    "--color=yes",
 ]
 markers = [
-    "slow: marks tests as slow",
-    "integration: marks tests as integration tests",
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "e2e: End-to-end tests",
+    "slow: Slow running tests",
+    "api: API-related tests",
+    "discord: Discord interaction tests",
+    "github: GitHub integration tests",
+    "network: Network-dependent tests",
+]
+asyncio_mode = "auto"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
 ]
 
 [tool.coverage.run]
