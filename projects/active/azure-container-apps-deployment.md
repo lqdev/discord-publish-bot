@@ -164,6 +164,9 @@ DISCORD_USER_ID=***           # Azure secret
 GITHUB_TOKEN=***              # Azure secret
 GITHUB_REPO=***               # Azure secret
 
+# API Security
+API_KEY=***                   # Azure secret (32+ characters)
+
 # Application Configuration
 ENVIRONMENT=production
 LOG_LEVEL=INFO
