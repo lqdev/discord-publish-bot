@@ -8,6 +8,7 @@ Implements Discord bot with slash commands for content publishing.
 import asyncio
 import logging
 import os
+import sys
 from typing import Optional
 
 import discord
