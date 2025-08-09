@@ -209,7 +209,8 @@ def publishing_service(test_settings, mock_github_client):
     """Provide a publishing service with mocked dependencies."""
     return PublishingService(
         github_client=mock_github_client,
-        settings=test_settings
+        github_settings=test_settings.github,
+        publishing_settings=test_settings.publishing
     )
 
 

@@ -67,10 +67,10 @@ class DiscordInteractionsHandler:
         """
         self.settings = settings
         
-        if not settings.public_key:
+        if not settings.discord.public_key:
             raise ValueError("Discord public key is required for HTTP interactions")
         
-        self.verify_key = VerifyKey(bytes.fromhex(settings.public_key))
+        self.verify_key = VerifyKey(bytes.fromhex(settings.discord.public_key))
         logger.info("Initialized Discord interactions handler")
     
     def verify_signature(self, signature: str, timestamp: str, body: bytes) -> bool:

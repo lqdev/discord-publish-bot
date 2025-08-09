@@ -21,11 +21,13 @@ class TestPublishingService:
         """Test publishing service can be initialized."""
         service = PublishingService(
             github_client=mock_github_client,
-            settings=test_settings
+            github_settings=test_settings.github,
+            publishing_settings=test_settings.publishing
         )
         
         assert service.github_client == mock_github_client
-        assert service.settings == test_settings
+        assert service.github_settings == test_settings.github
+        assert service.publishing_settings == test_settings.publishing
     
     @pytest.mark.asyncio
     async def test_publish_note_post(self, publishing_service, sample_post_data):
