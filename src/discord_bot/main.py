@@ -216,5 +216,16 @@ async def main():
             await bot.close()
 
 
+def cli_main():
+    """Synchronous entry point for command line usage."""
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\n🛑 Bot stopped by user")
+    except Exception as e:
+        print(f"❌ Error starting bot: {e}")
+        sys.exit(1)
+
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    cli_main()

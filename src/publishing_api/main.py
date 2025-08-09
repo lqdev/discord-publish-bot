@@ -254,9 +254,14 @@ async def shutdown_event():
     logger.info("Publishing API shutting down")
 
 
-if __name__ == "__main__":
+def main():
+    """Entry point for command line usage."""
     import uvicorn
-
+    
     # Development server
     # In production, use: uv run uvicorn src.publishing_api.main:app --host 0.0.0.0 --port 8000
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True, log_level="info")
+    uvicorn.run("src.publishing_api.main:app", host="0.0.0.0", port=8000, reload=True, log_level="info")
+
+
+if __name__ == "__main__":
+    main()

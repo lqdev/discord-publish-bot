@@ -258,12 +258,6 @@ temp/
 *.swp
 *.swo
 
-# Development and Testing Scripts (temporary)
-scripts/test-*.py
-scripts/debug-*.py
-scripts/temp-*.py
-scripts/scratch-*.py
-
 # Project-specific
 # Add any project-specific files that should not be committed
 backup/

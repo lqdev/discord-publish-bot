@@ -48,7 +48,7 @@ Repository = "https://github.com/yourusername/discord-publish-bot"
 Documentation = "https://github.com/yourusername/discord-publish-bot/blob/main/README.md"
 
 [project.scripts]
-discord-bot = "src.discord_bot.main:main"
+discord-bot = "src.discord_bot.main:cli_main"
 publishing-api = "src.publishing_api.main:main"
 
 [build-system]

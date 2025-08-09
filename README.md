@@ -95,12 +95,10 @@ A Discord bot that automatically publishes Discord posts to GitHub repositories 
 # source .venv/bin/activate  # Linux/Mac
 
 # Start Publishing API
-cd src/publishing_api
-uv run uvicorn main:app --reload --port 8000
+uv run publishing-api
 
 # Start Discord Bot (in separate terminal)
-cd src/discord_bot
-uv run python main.py
+uv run discord-bot
 ```
 
 #### Production Deployment
@@ -162,8 +160,8 @@ python scripts/dev.py dev          # Start development servers
 # Direct UV commands
 uv run pytest                      # Run all tests
 uv run black src/ tests/           # Format code
-uv run uvicorn src.publishing_api.main:app --reload  # Start API
-uv run python src/discord_bot/main.py               # Start bot
+uv run publishing-api              # Start API  
+uv run discord-bot                 # Start bot
 ```
 
 ### Project Management
