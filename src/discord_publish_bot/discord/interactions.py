@@ -67,10 +67,10 @@ class DiscordInteractionsHandler:
         """
         self.settings = settings
         
-        if not settings.discord.public_key:
+        if not settings.public_key:
             raise ValueError("Discord public key is required for HTTP interactions")
         
-        self.verify_key = VerifyKey(bytes.fromhex(settings.discord.public_key))
+        self.verify_key = VerifyKey(bytes.fromhex(settings.public_key))
         logger.info("Initialized Discord interactions handler")
     
     def verify_signature(self, signature: str, timestamp: str, body: bytes) -> bool:
@@ -148,7 +148,7 @@ class DiscordInteractionsHandler:
             logger.info(f"Processing command {command_name} from user {user_id}")
             
             # Authorization check
-            if user_id != self.settings.discord.authorized_user_id:
+            if user_id != self.settings.authorized_user_id:
                 logger.warning(f"Unauthorized user {user_id} attempted to use command {command_name}")
                 return {
                     "type": InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -315,7 +315,7 @@ class DiscordInteractionsHandler:
             logger.info(f"Processing modal submission {custom_id} from user {user_id}")
             
             # Authorization check
-            if user_id != self.settings.discord.authorized_user_id:
+            if user_id != self.settings.authorized_user_id:
                 logger.warning(f"Unauthorized user {user_id} attempted modal submission")
                 return {
                     "type": InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
