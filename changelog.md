@@ -66,6 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **✅ Cost Optimization**: Zero compute charges during idle periods (95%+ of time for Discord bot usage)
 - **✅ Performance Validation**: Cold start <2s well within Discord 3s response requirement
 - **✅ Resource Right-Sizing**: Reduced to 0.25 cores/0.5GB optimized for sporadic usage pattern
+- **✅ Single-User Optimization**: maxReplicas: 2 (optimized for single-user Discord bot scenario)
 - **✅ ADR-006**: Comprehensive architectural decision documentation with monitoring strategy
 - **✅ Deployment Plan Updated**: Phase 2 configuration reflects scale-to-zero best practices
 

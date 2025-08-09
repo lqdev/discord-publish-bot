@@ -43,13 +43,13 @@ Azure Container Apps supports scaling to zero replicas, which would eliminate co
 
 ## Decision
 
-**✅ ADOPTED: Scale-to-Zero Configuration**
+**✅ ADOPTED: Scale-to-Zero Configuration for Single-User Bot**
 
 Configure Azure Container Apps with:
 ```yaml
 scale:
   minReplicas: 0     # Enable scale-to-zero
-  maxReplicas: 10    # Allow burst scaling
+  maxReplicas: 2     # Single-user optimization
   rules:
     - name: http-rule
       http:
@@ -60,6 +60,7 @@ scale:
 **Resource Specifications:**
 - **CPU:** 0.25 cores (reduced from 0.5) 
 - **Memory:** 0.5GB (reduced from 1GB)
+- **Max Replicas:** 2 (single-user optimization)
 - **Scale Trigger:** HTTP (default Azure Container Apps behavior)
 
 ## Rationale

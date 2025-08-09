@@ -144,7 +144,7 @@ Log Analytics Workspace: law-discord-bot-prod
 - **CPU:** 0.25 cores (scalable to 1.0)
 - **Memory:** 0.5GB (scalable to 2GB)  
 - **Min Replicas:** 0 ✅ **SCALE-TO-ZERO ENABLED**
-- **Max Replicas:** 10
+- **Max Replicas:** 2
 - **Ingress:** HTTPS only, port 8000
 - **Scale Rule:** HTTP (default) - scales automatically based on incoming requests
 - **Cost Optimization:** Zero charges when idle (no Discord interactions)
