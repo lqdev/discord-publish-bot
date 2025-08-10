@@ -89,8 +89,10 @@ class TestPublishingService:
         assert frontmatter["title"] == note_data.title
         assert frontmatter["post_type"] == "note"
         assert "published_date" in frontmatter
-        assert frontmatter["tags"] == note_data.tags
-        assert "target_url" not in frontmatter  # Notes don't have target URLs
+        # Tags include original tags plus default note/indieweb tags
+        expected_tags = list(note_data.tags) + ["note", "indieweb"]
+        assert frontmatter["tags"] == expected_tags
+        assert "targeturl" not in frontmatter  # Notes don't have target URLs
     
     def test_frontmatter_generation_response(self, publishing_service, sample_post_data):
         """Test frontmatter generation for response posts."""
@@ -101,7 +103,7 @@ class TestPublishingService:
         assert frontmatter["title"] == response_data.title
         assert frontmatter["response_type"] == "reply"
         assert "dt_published" in frontmatter
-        assert frontmatter["target_url"] == response_data.target_url
+        assert frontmatter["targeturl"] == response_data.target_url
         assert frontmatter["tags"] == response_data.tags
     
     def test_frontmatter_generation_bookmark(self, publishing_service, sample_post_data):
@@ -113,7 +115,7 @@ class TestPublishingService:
         assert frontmatter["title"] == bookmark_data.title
         assert frontmatter["response_type"] == "bookmark"
         assert "dt_published" in frontmatter
-        assert frontmatter["target_url"] == bookmark_data.target_url
+        assert frontmatter["targeturl"] == bookmark_data.target_url
         assert frontmatter["tags"] == bookmark_data.tags
     
     def test_filename_generation(self, publishing_service, sample_post_data):

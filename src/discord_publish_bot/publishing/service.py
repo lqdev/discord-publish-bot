@@ -281,7 +281,14 @@ class PublishingService:
 
     def _generate_frontmatter(self, post_data: PostData) -> Dict[str, Any]:
         """
-        Generate frontmatter for post type using established VS Code snippet format.
+        Generate frontmatter for post type using site's established schema format.
+        
+        Based on analysis of existing content:
+        - Notes: post_type, title, published_date, tags array
+        - Responses/Bookmarks: title, targeturl, response_type, dt_published, dt_updated, tags array  
+        - Media: post_type, title, published_date, tags array
+        - All dates use -05:00 timezone
+        - Tags are always arrays of strings ["tag1", "tag2"]
         
         Args:
             post_data: Post data
@@ -293,67 +300,64 @@ class PublishingService:
             FrontmatterError: If frontmatter generation fails
         """
         try:
-            now = datetime.now(timezone.utc)
+            # Use Eastern Time (-05:00) as per site convention
+            from datetime import timezone, timedelta
+            est = timezone(timedelta(hours=-5))
+            now = datetime.now(est)
             
-            # Base frontmatter using established format
+            # Base frontmatter
             frontmatter = {
                 "title": post_data.title,
             }
             
-            # Type-specific fields using VS Code snippet format
+            # Type-specific fields using established site schema
             if post_data.post_type == PostType.NOTE:
                 frontmatter.update({
-                    "type": "note",
-                    "date": now.strftime("%Y-%m-%d %H:%M %z"),
-                    "slug": self._generate_slug(post_data.title),
+                    "post_type": "note",
+                    "published_date": now.strftime("%Y-%m-%d %H:%M -05:00"),
                 })
             
             elif post_data.post_type in (PostType.RESPONSE, PostType.BOOKMARK):
-                response_type = "bookmark" if post_data.post_type == PostType.BOOKMARK else "response"
+                response_type = "bookmark" if post_data.post_type == PostType.BOOKMARK else "reply"
+                date_str = now.strftime("%Y-%m-%d %H:%M -05:00")
                 frontmatter.update({
-                    "type": response_type,
-                    "target_url": post_data.target_url,
-                    "date": now.strftime("%Y-%m-%d %H:%M %z"),
-                    "slug": self._generate_slug(post_data.title),
+                    "targeturl": post_data.target_url,
+                    "response_type": response_type,
+                    "dt_published": now.strftime("%Y-%m-%d %H:%M"),
+                    "dt_updated": date_str,
                 })
             
             elif post_data.post_type == PostType.MEDIA:
                 frontmatter.update({
-                    "type": "media",
-                    "date": now.strftime("%Y-%m-%d %H:%M %z"),
-                    "slug": self._generate_slug(post_data.title),
+                    "post_type": "media",
+                    "published_date": now.strftime("%Y-%m-%d %H:%M -05:00"),
                 })
                 if post_data.media_url:
                     frontmatter["media_url"] = post_data.media_url
             
-            # Add tags if present - using inline quoted array format
+            # Add tags as array of strings (site convention)
             if post_data.tags:
-                frontmatter["tags"] = post_data.tags
+                # Ensure tags are strings and add default tags
+                tags = [str(tag) for tag in post_data.tags]
+                # Add type-specific default tags
+                if post_data.post_type == PostType.NOTE:
+                    if "note" not in tags:
+                        tags.append("note")
+                    if "indieweb" not in tags:
+                        tags.append("indieweb")
+                frontmatter["tags"] = tags
+            else:
+                # Default tags based on type
+                if post_data.post_type == PostType.NOTE:
+                    frontmatter["tags"] = ["note", "indieweb"]
+                else:
+                    frontmatter["tags"] = []
             
             return frontmatter
             
         except Exception as e:
             logger.error(f"Failed to generate frontmatter: {e}")
-            raise FrontmatterError(f"Failed to generate frontmatter: {e}", frontmatter=frontmatter)
-
-    def _generate_slug(self, title: str) -> str:
-        """
-        Generate URL-friendly slug from title.
-        
-        Args:
-            title: Post title
-            
-        Returns:
-            URL-friendly slug
-        """
-        import re
-        
-        # Convert to lowercase and replace spaces/special chars
-        slug = re.sub(r'[^a-z0-9\s-]', '', title.lower())
-        slug = re.sub(r'\s+', '-', slug.strip())
-        slug = re.sub(r'-+', '-', slug)
-        
-        return slug or "untitled"
+            raise FrontmatterError(f"Failed to generate frontmatter: {e}", frontmatter={})
 
     def _build_markdown_content(self, frontmatter: Dict[str, Any], content: str) -> str:
         """
