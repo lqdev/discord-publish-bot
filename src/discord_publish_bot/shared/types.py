@@ -81,6 +81,7 @@ class PublishResult(BaseModel):
     # URLs
     file_url: Optional[str] = Field(None, description="URL to view file in GitHub")
     site_url: Optional[str] = Field(None, description="URL where post will be published")
+    pull_request_url: Optional[str] = Field(None, description="URL to pull request if using PR workflow")
     
     # Error information
     error_code: Optional[str] = Field(None, description="Error code if publishing failed")

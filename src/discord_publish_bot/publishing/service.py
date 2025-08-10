@@ -103,7 +103,7 @@ class PublishingService:
 
     async def publish_post(self, post_data: PostData) -> PublishResult:
         """
-        Process post data and publish to GitHub.
+        Process post data and publish to GitHub using PR workflow.
 
         Args:
             post_data: Structured post data
@@ -131,30 +131,74 @@ class PublishingService:
             directory = self.CONTENT_TYPE_DIRECTORIES[post_data.post_type]
             filepath = f"{directory}/{filename}"
             
-            # Commit to GitHub
-            commit_info = await self.github_client.create_commit(
-                filename=filepath,
-                content=content,
-                message=f"Add {post_data.post_type.value} post: {post_data.title}",
-                branch=self.github_settings.branch
-            )
+            # Create branch for PR workflow
+            now = datetime.now(timezone.utc)
+            branch_name = f"content/discord-bot/{now.strftime('%Y-%m-%d')}/{post_data.post_type.value}/{filename.replace('.md', '')}"
             
-            # Generate site URL
-            site_url = self._generate_site_url(filepath)
-            
-            result = PublishResult(
-                success=True,
-                message=f"{post_data.post_type.value.title()} post published successfully",
-                filename=filename,
-                filepath=filepath,
-                commit_sha=commit_info["sha"],
-                branch_name=self.github_settings.branch,
-                file_url=commit_info["url"],
-                site_url=site_url
-            )
-            
-            logger.info(f"Successfully published post: {filename}")
-            return result
+            try:
+                # Create feature branch
+                await self.github_client.create_branch(branch_name, self.github_settings.branch)
+                logger.info(f"Created branch: {branch_name}")
+                
+                # Create file on branch
+                commit_info = await self.github_client.create_file(
+                    path=filepath,
+                    content=content,
+                    message=f"Add {post_data.post_type.value} post: {post_data.title}",
+                    branch=branch_name
+                )
+                
+                # Create pull request
+                pr_title = f"Add {post_data.post_type.value} post: {post_data.title}"
+                pr_body = f"""## New {post_data.post_type.value.title()} Post
+
+**Title:** {post_data.title}
+**Type:** {post_data.post_type.value}
+**File:** `{filepath}`
+
+### Content Preview
+{post_data.content[:200]}{'...' if len(post_data.content) > 200 else ''}
+
+### Frontmatter Validation
+- ✅ Title: {post_data.title}
+- ✅ Type: {post_data.post_type.value}
+- ✅ Tags: {', '.join(post_data.tags) if post_data.tags else 'None'}
+
+**Created via Discord Publishing Bot**"""
+
+                pr = await self.github_client.create_pull_request(
+                    title=pr_title,
+                    body=pr_body,
+                    head_branch=branch_name,
+                    base_branch=self.github_settings.branch
+                )
+                
+                # Generate site URL
+                site_url = self._generate_site_url(filepath)
+                
+                result = PublishResult(
+                    success=True,
+                    message=f"{post_data.post_type.value.title()} post created successfully! PR #{pr.number}",
+                    filename=filename,
+                    filepath=filepath,
+                    commit_sha=commit_info["sha"],
+                    branch_name=branch_name,
+                    file_url=commit_info["url"],
+                    site_url=site_url,
+                    pull_request_url=pr.html_url
+                )
+                
+                logger.info(f"Successfully created post PR #{pr.number}: {filename}")
+                return result
+                
+            except Exception as pr_error:
+                # If PR workflow fails, clean up the branch
+                try:
+                    await self.github_client.delete_branch(branch_name)
+                    logger.info(f"Cleaned up branch {branch_name} after PR failure")
+                except:
+                    pass  # Don't fail if cleanup fails
+                raise pr_error
             
         except Exception as e:
             logger.error(f"Failed to publish post: {e}")
@@ -237,7 +281,7 @@ class PublishingService:
 
     def _generate_frontmatter(self, post_data: PostData) -> Dict[str, Any]:
         """
-        Generate frontmatter for post type.
+        Generate frontmatter for post type using established VS Code snippet format.
         
         Args:
             post_data: Post data
@@ -250,50 +294,66 @@ class PublishingService:
         """
         try:
             now = datetime.now(timezone.utc)
-            schema = self.FRONTMATTER_SCHEMAS[post_data.post_type]
             
-            # Base frontmatter
+            # Base frontmatter using established format
             frontmatter = {
                 "title": post_data.title,
             }
             
-            # Type-specific fields
+            # Type-specific fields using VS Code snippet format
             if post_data.post_type == PostType.NOTE:
                 frontmatter.update({
-                    "post_type": "note",
-                    "published_date": now.isoformat(),
+                    "type": "note",
+                    "date": now.strftime("%Y-%m-%d %H:%M %z"),
+                    "slug": self._generate_slug(post_data.title),
                 })
             
             elif post_data.post_type in (PostType.RESPONSE, PostType.BOOKMARK):
-                response_type = "bookmark" if post_data.post_type == PostType.BOOKMARK else "reply"
+                response_type = "bookmark" if post_data.post_type == PostType.BOOKMARK else "response"
                 frontmatter.update({
+                    "type": response_type,
                     "target_url": post_data.target_url,
-                    "response_type": response_type,
-                    "dt_published": now.isoformat(),
-                    "dt_updated": now.isoformat(),
+                    "date": now.strftime("%Y-%m-%d %H:%M %z"),
+                    "slug": self._generate_slug(post_data.title),
                 })
             
             elif post_data.post_type == PostType.MEDIA:
                 frontmatter.update({
-                    "post_type": "media",
-                    "published_date": now.isoformat(),
+                    "type": "media",
+                    "date": now.strftime("%Y-%m-%d %H:%M %z"),
+                    "slug": self._generate_slug(post_data.title),
                 })
                 if post_data.media_url:
                     frontmatter["media_url"] = post_data.media_url
             
-            # Add tags if present
+            # Add tags if present - using inline quoted array format
             if post_data.tags:
                 frontmatter["tags"] = post_data.tags
-            
-            # Add author if configured
-            if self.publishing_settings.default_author:
-                frontmatter["author"] = self.publishing_settings.default_author
             
             return frontmatter
             
         except Exception as e:
             logger.error(f"Failed to generate frontmatter: {e}")
             raise FrontmatterError(f"Failed to generate frontmatter: {e}", frontmatter=frontmatter)
+
+    def _generate_slug(self, title: str) -> str:
+        """
+        Generate URL-friendly slug from title.
+        
+        Args:
+            title: Post title
+            
+        Returns:
+            URL-friendly slug
+        """
+        import re
+        
+        # Convert to lowercase and replace spaces/special chars
+        slug = re.sub(r'[^a-z0-9\s-]', '', title.lower())
+        slug = re.sub(r'\s+', '-', slug.strip())
+        slug = re.sub(r'-+', '-', slug)
+        
+        return slug or "untitled"
 
     def _build_markdown_content(self, frontmatter: Dict[str, Any], content: str) -> str:
         """
