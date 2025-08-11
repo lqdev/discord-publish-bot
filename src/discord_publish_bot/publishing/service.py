@@ -335,29 +335,50 @@ class PublishingService:
                 if post_data.media_url:
                     frontmatter["media_url"] = post_data.media_url
             
-            # Add tags as array of strings (site convention)
+            # Add tags as inline array (site convention)
             if post_data.tags:
-                # Ensure tags are strings and add default tags
+                # Use original tags only, no auto-additions
                 tags = [str(tag) for tag in post_data.tags]
-                # Add type-specific default tags
-                if post_data.post_type == PostType.NOTE:
-                    if "note" not in tags:
-                        tags.append("note")
-                    if "indieweb" not in tags:
-                        tags.append("indieweb")
                 frontmatter["tags"] = tags
             else:
-                # Default tags based on type
-                if post_data.post_type == PostType.NOTE:
-                    frontmatter["tags"] = ["note", "indieweb"]
-                else:
-                    frontmatter["tags"] = []
+                # No default tags - use empty array
+                frontmatter["tags"] = []
             
             return frontmatter
             
         except Exception as e:
             logger.error(f"Failed to generate frontmatter: {e}")
             raise FrontmatterError(f"Failed to generate frontmatter: {e}", frontmatter={})
+
+    def _format_frontmatter_inline(self, data: Dict[str, Any]) -> str:
+        """
+        Format frontmatter with inline array format for tags.
+        
+        Args:
+            data: Frontmatter dictionary
+            
+        Returns:
+            Formatted frontmatter string with inline arrays
+        """
+        lines = []
+        for key, value in data.items():
+            if isinstance(value, list):
+                # Format as inline array: tags: ["tag1", "tag2"]
+                if value:
+                    formatted_items = [f'"{item}"' for item in value]
+                    lines.append(f'{key}: [{", ".join(formatted_items)}]')
+                else:
+                    lines.append(f'{key}: []')
+            elif isinstance(value, str):
+                # Quote strings that might need it
+                if any(char in value for char in ['"', "'", ':', '#', '\n']):
+                    lines.append(f'{key}: "{value}"')
+                else:
+                    lines.append(f'{key}: {value}')
+            else:
+                lines.append(f'{key}: {value}')
+        
+        return '\n'.join(lines)
 
     def _build_markdown_content(self, frontmatter: Dict[str, Any], content: str) -> str:
         """
@@ -374,7 +395,7 @@ class PublishingService:
         clean_content = sanitize_content(content)
         
         # Format frontmatter as YAML
-        yaml_frontmatter = format_frontmatter(frontmatter)
+        yaml_frontmatter = self._format_frontmatter_inline(frontmatter)
         
         # Combine into markdown
         markdown_content = f"---\n{yaml_frontmatter}\n---\n\n{clean_content}\n"

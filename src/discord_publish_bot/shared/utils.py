@@ -75,19 +75,15 @@ def generate_filename(
     Args:
         post_type: Type of post
         title: Post title
-        timestamp: Optional timestamp (defaults to now)
+        timestamp: Optional timestamp (not used, kept for compatibility)
         
     Returns:
-        Generated filename with .md extension
+        Generated filename with .md extension (no date prefix)
     """
-    if timestamp is None:
-        timestamp = datetime.now(timezone.utc)
-    
-    # Format: YYYY-MM-DD-title-slug.md
-    date_prefix = timestamp.strftime("%Y-%m-%d")
+    # Format: title-slug.md (no date prefix)
     title_slug = slugify(title, max_length=80)
     
-    return f"{date_prefix}-{title_slug}.md"
+    return f"{title_slug}.md"
 
 
 def validate_url(url: str) -> bool:

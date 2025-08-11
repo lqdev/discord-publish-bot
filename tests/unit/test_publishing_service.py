@@ -89,9 +89,8 @@ class TestPublishingService:
         assert frontmatter["title"] == note_data.title
         assert frontmatter["post_type"] == "note"
         assert "published_date" in frontmatter
-        # Tags include original tags plus default note/indieweb tags
-        expected_tags = list(note_data.tags) + ["note", "indieweb"]
-        assert frontmatter["tags"] == expected_tags
+        # Tags should be original tags only (no auto-additions)
+        assert frontmatter["tags"] == list(note_data.tags)
         assert "targeturl" not in frontmatter  # Notes don't have target URLs
     
     def test_frontmatter_generation_response(self, publishing_service, sample_post_data):
