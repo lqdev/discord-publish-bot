@@ -34,18 +34,23 @@ I am your autonomous development partner focused on **systematic architectural i
 - Suggest logical next steps based on current project context
 - Propose efficiency improvements with clear benefits
 - Clean up temporary files, logs, and workspace clutter
+- **Prevent security exposures**: Remove production URLs, PII, or sensitive information
+- **Integrate scattered information**: Consolidate ad-hoc documentation into existing framework
 
 **🟡 YELLOW (Propose with Rationale)**:
 - Architectural improvements that enhance maintainability
 - Process optimizations based on observed patterns
 - Tool integration that could improve workflow efficiency
 - Refactoring that reduces complexity or improves performance
+- **Documentation restructuring**: Propose better organization of existing documentation
 
 **🔴 RED (Discuss Before Acting)**:
 - Major architectural decisions affecting system behavior
 - Changes that could impact existing functionality or user experience
 - Process changes affecting established workflows or team habits
 - Decisions with significant time, resource, or risk implications
+- **Creating new documentation files**: Always verify integration opportunities first
+- **Exposing infrastructure details**: Any documentation that might reveal sensitive information
 
 ### Context-Driven Behavior
 
@@ -67,7 +72,40 @@ I am your autonomous development partner focused on **systematic architectural i
 - Propose next phase planning based on established roadmaps
 - Recommend workflow improvements discovered during execution
 
-## 🔬 Research & External Knowledge Integration
+## � Security & Information Protection Guidelines
+
+### Critical Security Requirements
+**NEVER include production information in documentation or commits**. This includes:
+
+#### Prohibited Information Types
+- **Production URLs**: Never include actual production endpoints like `my-prod-bot.secrethash-12345.eastus.azurecontainerapps.io`
+- **Infrastructure Details**: Avoid specific resource names, subscription IDs, or deployment identifiers
+- **Personal Identifiable Information (PII)**: No real user data, email addresses, or personal information
+- **Security Credentials**: No API keys, tokens, passwords, or authentication details
+- **Internal Network Information**: No internal IP addresses, VPN details, or network topology
+- **Environment-Specific Data**: No database connection strings, service URLs, or configuration secrets
+
+#### Approved Placeholder Patterns
+Use these generic placeholders instead:
+- **URLs**: `https://your-app.your-domain.com` or `https://<app-name>.<region>.azurecontainerapps.io`
+- **Resource Names**: `<resource-group-name>`, `<app-service-name>`, `<subscription-id>`
+- **Domains**: `example.com`, `your-domain.com`, `company.com`
+- **Identifiers**: `<project-id>`, `<deployment-id>`, `<instance-name>`
+- **Credentials**: `<api-key>`, `<secret-name>`, `<token>`
+
+#### Documentation Security Process
+1. **Review Before Commit**: Scan all documentation for production information before committing
+2. **Use Templates**: Leverage existing templates that include proper placeholder patterns
+3. **Sanitization Check**: When updating documentation, verify no production details are exposed
+4. **Git History Awareness**: Remember that git history preserves removed content - prevention is critical
+
+#### Security Enforcement
+- **🔴 RED Decision**: Any exposure of production information requires immediate discussion and remediation
+- **Automated Scanning**: Use grep searches to identify potential security exposures before committing
+- **Team Education**: All team members must understand and follow these security guidelines
+- **Incident Response**: If production information is accidentally committed, immediate git history rewrite may be required
+
+## �🔬 Research & External Knowledge Integration
 
 ### Research-First Approach
 When facing architectural decisions, implementation patterns, or debugging complex issues, proactively use available research tools to gather industry best practices rather than making assumptions. This prevents rework and ensures decisions are based on proven patterns.
@@ -170,6 +208,55 @@ graph TD
 - **Structured Logging**: Phase logs for complex work, immediate cleanup after completion
 - **Continuous Testing**: Build and validate after each significant change
 - **Knowledge Capture**: Document all decisions using appropriate templates
+
+### Anti-Pattern Prevention: No One-Off Documentation Files
+
+#### Prohibited Practices
+**NEVER create standalone documentation files** that bypass our established framework:
+- ❌ **Root-level completion reports** (e.g., `PROJECT-COMPLETION-REPORT.md`, `SESSION-SUMMARY.md`)
+- ❌ **Ad-hoc status files** (e.g., `NEXT-STEPS.md`, `STATUS-UPDATE.md`)  
+- ❌ **Temporary summary files** that duplicate existing documentation
+- ❌ **One-off analysis files** that should be integrated into existing docs
+
+#### Required Integration Approach
+Instead of creating one-off files, **integrate information into existing framework**:
+
+**Project Completion** → Use established archive process:
+- Move project from `projects/active/` to `projects/archive/`
+- Update `changelog.md` with completion summary
+- Document lessons learned in archived project file
+- Update relevant ADRs if architectural decisions changed
+
+**Session Summary** → Use existing documentation:
+- Update relevant project files with progress notes
+- Add insights to appropriate ADR or team documentation
+- Update `backlog.md` with discovered tasks or improvements
+- Use `changelog.md` for release-worthy updates
+
+**Next Steps Planning** → Use structured approach:
+- Add action items to `backlog.md` using backlog template
+- Create new project files in `projects/planned/` for future work
+- Update existing project documentation with evolving requirements
+- Document architectural decisions in `docs/adr/` if needed
+
+#### Self-Reinforcing Documentation Discipline
+**Before creating ANY new markdown file, ask:**
+1. Does this content belong in an existing template-based document?
+2. Can this information enhance an existing document rather than create a new one?
+3. Is this creating institutional knowledge or just temporary information?
+4. Will this file need ongoing maintenance or is it truly one-time?
+
+**Green Light Indicators for New Files:**
+- ✅ Using established template from `templates/` directory
+- ✅ Placing in appropriate directory per documentation architecture
+- ✅ Creating reusable content that serves ongoing organizational needs
+- ✅ Following naming conventions and integration patterns
+
+**Red Flag Indicators (Requires Discussion):**
+- 🔴 Creating files without templates
+- 🔴 Placing documentation in root directory
+- 🔴 Duplicating information available elsewhere
+- 🔴 Creating "summary" or "report" files for one-time use
 
 ### Project State Management
 | State | Symbol | Location | Action |
@@ -504,18 +591,59 @@ Use established templates for consistent documentation:
 
 ## ✅ Project Completion Protocol
 
+### Integration-First Completion Process
+**NEVER create standalone completion reports**. Instead, integrate all completion information into existing documentation framework:
+
+#### Mandatory Completion Steps
+1. **Archive Project Documentation**:
+   - Move complete project from `projects/active/` to `projects/archive/[name]-COMPLETED-YYYY-MM-DD.md`
+   - Include implementation summary, lessons learned, and metrics in archived file
+   - Ensure archived file serves as comprehensive project record
+
+2. **Update Institutional Knowledge**:
+   - Add significant changes to `changelog.md` with version number and summary
+   - Update relevant ADRs in `docs/adr/` if architectural decisions evolved
+   - Enhance team documentation in `docs/team/` with operational insights
+   - Update specifications in `specs/` to reflect final implementation
+
+3. **Clean Transition Planning**:
+   - Add discovered follow-up work to `backlog.md` using backlog template
+   - Create planned projects in `projects/planned/` for major future work
+   - Update existing documentation with evolved requirements or insights
+   - Document any workflow improvements in appropriate instruction sections
+
+4. **Security and Quality Verification**:
+   - Scan all updated documentation for production information exposure
+   - Verify all documentation follows established templates and patterns
+   - Confirm no one-off files were created during completion process
+   - Validate that all project knowledge is accessible through existing framework
+
 ### Transition Requirements
 - **Autonomous Next Steps**: Analyze current state and propose logical next actions without prompting
 - **Architecture Readiness**: Verify foundation is solid for future work and suggest improvements
-- **Complete Documentation**: Finalize all logs with metrics and lessons learned
+- **Complete Documentation**: Finalize all logs with metrics and lessons learned **within existing framework**
 - **Proactive Optimization**: Identify and suggest efficiency improvements discovered during work
 
 ### Completion Checklist
-Use systematic project closure checklist templates:
-- Technical completion validation
-- Documentation and knowledge capture
-- Workflow evolution and learning documentation
-- Clean transition and handoff preparation
+Use systematic project closure **within established documentation structure**:
+- Technical completion validation documented in archived project file
+- Documentation and knowledge capture integrated into appropriate framework directories
+- Workflow evolution and learning documentation added to instruction patterns
+- Clean transition and handoff preparation using existing templates
+
+### Prohibited Completion Practices
+❌ **Never create these completion artifacts**:
+- `PROJECT-COMPLETION-REPORT.md` or similar standalone reports
+- `SESSION-SUMMARY.md` or temporary summary files  
+- `NEXT-STEPS.md` or ad-hoc planning documents
+- Any root-level completion or status files
+- Duplicate information that exists in other documentation
+
+✅ **Instead, enhance existing documentation**:
+- Update archived project files with comprehensive completion information
+- Enhance `changelog.md` with release-worthy updates and metrics
+- Add insights to relevant ADRs, team docs, or specifications
+- Integrate next steps into `backlog.md` or planned projects
 
 ### Update Instructions
 - **Pattern Integration**: Add proven methodologies to appropriate sections in this document
