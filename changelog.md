@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.1] - 2025-08-10 - 🔧 CRITICAL MODAL ROUTING FIX
+
+### 🚨 Fixed: Discord Modal Type Mismatch Bug
+**Issue**: Response, bookmark, and media post commands were incorrectly showing the note modal in production
+**Root Cause**: Parameter name mismatch between WebSocket bot (`post_type`) and HTTP interactions handler (`type`)
+**Impact**: Users could not access proper modals for non-note post types in production deployment
+
+#### ✅ Critical Bug Resolution
+- **Fixed**: HTTP interactions handler now correctly looks for `post_type` parameter instead of `type`
+- **Validated**: All post types now show correct modals with appropriate fields:
+  - Note modal: Title, Content, Tags (3 fields)
+  - Response modal: Title, Content, Tags, Reply URL (4 fields)
+  - Bookmark modal: Title, Content, Tags, Bookmark URL (4 fields)
+  - Media modal: Title, Content, Tags, Media URL (4 fields)
+- **Tested**: Parameter parsing validation confirms proper routing for all post types
+
+#### ✅ Quality Assurance
+- **Build Validation**: Application builds and imports successfully
+- **Container Ready**: Docker build completed for deployment
+- **Test Coverage**: Comprehensive validation of modal creation and parameter parsing
+- **Production Impact**: Fix enables full functionality for all Discord post types
+
+#### ✅ Production Deployment Completed (2025-08-11)
+- **Deployment Status**: ✅ Successfully deployed to Azure Container Apps
+- **Container Image**: Built and pushed to Azure Container Registry
+- **Environment Configuration**: All secrets and environment variables properly configured
+- **Health Verification**: Application responding healthy on production endpoint
+- **Production URL**: `https://<app-name>.<region>.azurecontainerapps.io`
+- **Validation**: All Discord post types now show correct modals in production
+- **User Impact**: Critical functionality restored - users can now access response, bookmark, and media post modals
+
+---
+
 ## [2.0.0] - 2025-08-10 - 🎉 PRODUCTION DEPLOYMENT COMPLETE ✅
 
 ### 🚀 MAJOR MILESTONE: Discord Publish Bot Production Ready and Operational

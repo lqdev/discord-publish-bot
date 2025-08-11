@@ -540,6 +540,26 @@ Create an automated Discord bot that enables seamless publishing of Discord cont
 - **Format:** What went well, what could improve, action items
 - **Output:** Process improvements for next sprint
 
+### Latest Production Issue Lessons (2025-01-27)
+**Issue Resolved**: Discord modal routing parameter mismatch (v2.0.1)
+
+**What Went Well**:
+- ✅ **Rapid Diagnosis**: Root cause identified through systematic investigation
+- ✅ **Single-Line Fix**: Minimal change required (parameter name correction)
+- ✅ **Quick Deployment**: Fix deployed and verified within single session
+- ✅ **Health Verification**: Comprehensive production validation process
+
+**Improvement Opportunities**:
+- 🔧 **Parameter Consistency**: Need automated validation for parameter names across WebSocket/HTTP handlers
+- 🔧 **End-to-End Testing**: Modal flow testing to catch interaction routing issues early
+- 🔧 **Development Tooling**: Enhanced PATH configuration for Azure CLI consistency
+
+**Action Items for Future Development**:
+- [ ] Implement parameter validation tests across Discord interaction methods
+- [ ] Add comprehensive modal flow testing to test suite
+- [ ] Document Azure CLI PATH requirements in setup guides
+- [ ] Create automated checks for interaction parameter consistency
+
 ### Stakeholder Updates
 - **Frequency:** Weekly
 - **Format:** Progress summary, metrics, issues

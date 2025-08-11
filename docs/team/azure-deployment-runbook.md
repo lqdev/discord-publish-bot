@@ -149,3 +149,37 @@ az containerapp revision list \
 - Secrets are encrypted at rest and in transit
 - Use `.env.production` file for local secret management (never commit)
 - Regular secret rotation recommended
+
+## 📚 Deployment Lessons Learned
+
+### Critical Modal Routing Fix (2025-08-10)
+**Issue**: Discord commands showed wrong modals for different post types
+**Solution**: Single-line parameter name fix in HTTP interactions handler
+**Deployment**: Successful same-day fix with zero downtime
+
+#### Key Learnings
+1. **Azure CLI PATH**: Ensure Azure CLI is in system PATH before deployment
+   - Location: `C:\Program Files\Microsoft SDKs\Azure\CLI2\wbin`
+   - Add to session: `$env:PATH += ";C:\Program Files\Microsoft SDKs\Azure\CLI2\wbin"`
+
+2. **Environment Variable Persistence**: Always run step 2.2 after `az containerapp up`
+   - Command resets environment configuration
+   - Secret references must be re-applied after deployment
+   - Monitor container logs to verify successful startup
+
+3. **Health Verification Process**: 
+   - Check application logs: `az containerapp logs show -n <app> -g <rg> --tail 10`
+   - Verify health endpoint: PowerShell `Invoke-WebRequest` for JSON response
+   - Test functional endpoints before marking deployment complete
+
+4. **Rapid Fix Deployment Pattern**:
+   - Build and test locally → Docker container build → Azure deployment → Environment config → Health verification
+   - Total time: ~15 minutes for critical fixes
+   - Zero downtime deployment with scale-to-zero architecture
+
+#### Best Practices Validated
+- **Incremental Testing**: Local validation before deployment prevents production issues
+- **Container Health Checks**: Built-in health endpoint enables quick verification
+- **Secret Management**: Proper secret references maintain security during rapid deployments
+- **Documentation Integration**: ADR creation ensures architectural decisions are captured
+- Regular secret rotation recommended

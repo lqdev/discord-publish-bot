@@ -194,7 +194,7 @@ class DiscordInteractionsHandler:
             post_type = PostType.NOTE  # Default
             if "options" in interaction["data"]:
                 for option in interaction["data"]["options"]:
-                    if option["name"] == "type":
+                    if option["name"] == "post_type":
                         try:
                             post_type = PostType(option["value"])
                         except ValueError:
