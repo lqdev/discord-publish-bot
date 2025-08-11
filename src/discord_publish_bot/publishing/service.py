@@ -310,11 +310,15 @@ class PublishingService:
                 "title": post_data.title,
             }
             
+            # Generate base date without timezone (consistent with dt_published logic)
+            base_date = now.strftime("%Y-%m-%d %H:%M")
+            date_with_tz = f"{base_date} -05:00"
+            
             # Type-specific fields using established site schema
             if post_data.post_type == PostType.NOTE:
                 frontmatter.update({
                     "post_type": "note",
-                    "published_date": now.strftime("%Y-%m-%d %H:%M -05:00"),
+                    "published_date": date_with_tz,
                 })
             
             elif post_data.post_type in (PostType.RESPONSE, PostType.BOOKMARK):
@@ -324,18 +328,17 @@ class PublishingService:
                 else:
                     response_type = "bookmark" if post_data.post_type == PostType.BOOKMARK else "reply"
                 
-                date_str = now.strftime("%Y-%m-%d %H:%M -05:00")
                 frontmatter.update({
                     "targeturl": post_data.target_url,
                     "response_type": response_type,
-                    "dt_published": now.strftime("%Y-%m-%d %H:%M"),
-                    "dt_updated": date_str,
+                    "dt_published": base_date,
+                    "dt_updated": date_with_tz,
                 })
             
             elif post_data.post_type == PostType.MEDIA:
                 frontmatter.update({
                     "post_type": "media",
-                    "published_date": now.strftime("%Y-%m-%d %H:%M -05:00"),
+                    "published_date": date_with_tz,
                 })
                 if post_data.media_url:
                     frontmatter["media_url"] = post_data.media_url

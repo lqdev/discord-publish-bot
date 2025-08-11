@@ -5,7 +5,7 @@ A unified Discord bot and HTTP API for publishing content to GitHub repositories
 with support for multiple post types and deployment modes.
 """
 
-__version__ = "2.0.0"
+__version__ = "2.2.0"
 
 from .config import get_settings
 from .shared import PostType, PostData, PublishResult
