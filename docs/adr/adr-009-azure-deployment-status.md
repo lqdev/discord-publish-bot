@@ -112,9 +112,9 @@ This decision aligns with the autonomous partnership framework:
 4. **Register Providers**: Enable Container Apps and Log Analytics providers
 
 ### Phase 2B: Azure Resource Creation (2-3 hours)
-1. **Resource Group**: `rg-discord-publish-bot-prod`
-2. **Container Apps Environment**: `cae-discord-bot-prod`
-3. **Container App**: `example-container-app` with scale-to-zero configuration
+1. **Resource Group**: `<resource-group-name>`
+2. **Container Apps Environment**: `<container-app-environment>`
+3. **Container App**: `<container-app-name>` with scale-to-zero configuration
 4. **Monitoring**: Log Analytics workspace and Application Insights
 
 ### Phase 2C: Application Deployment (1-2 hours)

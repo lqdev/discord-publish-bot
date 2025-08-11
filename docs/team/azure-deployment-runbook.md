@@ -152,10 +152,10 @@ az containerapp revision list \
 
 ## 📚 Deployment Lessons Learned
 
-### Critical Modal Routing Fix (2025-08-10)
-**Issue**: Discord commands showed wrong modals for different post types
-**Solution**: Single-line parameter name fix in HTTP interactions handler
-**Deployment**: Successful same-day fix with zero downtime
+### Critical Modal Routing & Response Type Enhancement (2025-08-10)
+**Issue**: Discord commands showed wrong modals for different post types; users limited to "reply" responses only
+**Solution**: Modal parsing fix + response type selection implementation with correct frontmatter values
+**Deployment**: Successful same-day feature enhancement with zero downtime
 
 #### Key Learnings
 1. **Azure CLI PATH**: Ensure Azure CLI is in system PATH before deployment
@@ -172,10 +172,16 @@ az containerapp revision list \
    - Verify health endpoint: PowerShell `Invoke-WebRequest` for JSON response
    - Test functional endpoints before marking deployment complete
 
-4. **Rapid Fix Deployment Pattern**:
-   - Build and test locally → Docker container build → Azure deployment → Environment config → Health verification
-   - Total time: ~15 minutes for critical fixes
+4. **Enhanced Rapid Development Pattern**:
+   - Bug identification → Modal parsing fix → Response type enhancement → Production deployment → User validation
+   - Total time: ~45 minutes for complete feature enhancement from bug report to user validation
    - Zero downtime deployment with scale-to-zero architecture
+   - Command registration automation for Discord global command updates
+
+5. **Feature Enhancement Deployment**:
+   - Custom_id parsing complexity requires thorough testing for compound identifiers
+   - Import scope management critical for function-level variable usage
+   - User-specific frontmatter requirements ("reshare", "star") accommodated through enum value mapping
 
 #### Best Practices Validated
 - **Incremental Testing**: Local validation before deployment prevents production issues

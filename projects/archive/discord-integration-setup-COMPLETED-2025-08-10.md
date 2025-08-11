@@ -22,7 +22,7 @@ Successfully connected the deployed Azure Container Apps Discord bot to Discord 
 ### Step 1: ✅ Azure Endpoint Identification - COMPLETED
 
 **Azure Container App URL**: `https://<app-name>.<region>.azurecontainerapps.io`  
-**Resource Group**: `rg-discord-publish-bot-prod`  
+**Resource Group**: `<resource-group-name>`  
 **Health Status**: HEALTHY (Version 2.0.0, production environment)  
 **Discord Configuration**: ✅ All secrets configured  
 

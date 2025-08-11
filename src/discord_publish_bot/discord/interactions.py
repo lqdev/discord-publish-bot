@@ -190,8 +190,10 @@ class DiscordInteractionsHandler:
     def _handle_post_command(self, interaction: Dict[str, Any]) -> Dict[str, Any]:
         """Handle post slash command - show modal for post creation."""
         try:
-            # Get post type from command option
+            # Get post type and response type from command options
             post_type = PostType.NOTE  # Default
+            response_type = "reply"    # Default
+            
             if "options" in interaction["data"]:
                 for option in interaction["data"]["options"]:
                     if option["name"] == "post_type":
@@ -199,9 +201,10 @@ class DiscordInteractionsHandler:
                             post_type = PostType(option["value"])
                         except ValueError:
                             logger.warning(f"Invalid post type: {option['value']}")
-                        break
+                    elif option["name"] == "response_type":
+                        response_type = option["value"]
             
-            modal = self._create_post_modal(post_type)
+            modal = self._create_post_modal(post_type, response_type)
             
             return {
                 "type": InteractionResponseType.MODAL,
@@ -212,10 +215,16 @@ class DiscordInteractionsHandler:
             logger.error(f"Error handling post command: {e}")
             raise DiscordCommandError(f"Failed to handle post command: {e}")
     
-    def _create_post_modal(self, post_type: PostType) -> Dict[str, Any]:
+    def _create_post_modal(self, post_type: PostType, response_type: str = "reply") -> Dict[str, Any]:
         """Create modal for post creation based on type."""
+        # Include response_type in custom_id for response posts
+        if post_type == PostType.RESPONSE:
+            custom_id = f"post_modal_{post_type.value}_{response_type}"
+        else:
+            custom_id = f"post_modal_{post_type.value}"
+            
         modal = {
-            "custom_id": f"post_modal_{post_type.value}",
+            "custom_id": custom_id,
             "title": f"Create {post_type.value.title()} Post",
             "components": []
         }
@@ -267,7 +276,7 @@ class DiscordInteractionsHandler:
                 "components": [{
                     "type": ComponentType.TEXT_INPUT,
                     "custom_id": "target_url",
-                    "label": "Reply to URL",
+                    "label": "Target URL",
                     "style": 1,  # Short
                     "placeholder": "https://example.com/original-post",
                     "required": True,
@@ -329,7 +338,9 @@ class DiscordInteractionsHandler:
             if not custom_id.startswith("post_modal_"):
                 raise DiscordModalError("Invalid modal custom_id", modal_id=custom_id)
             
-            post_type_str = custom_id.replace("post_modal_", "")
+            # Extract post type and response type from custom_id
+            custom_id_parts = custom_id.replace("post_modal_", "").split("_")
+            post_type_str = custom_id_parts[0]
             try:
                 post_type = PostType(post_type_str)
             except ValueError:
@@ -367,15 +378,26 @@ class DiscordInteractionsHandler:
             custom_id = interaction["data"]["custom_id"]
             user_id = self._extract_user_id(interaction)
             
-            # Extract post type
-            post_type_str = custom_id.replace("post_modal_", "")
+            # Import required utilities at the beginning
+            from ..shared.utils import parse_tags
+            from ..shared.types import ResponseType
+            
+            # Extract post type and response type from custom_id
+            custom_id_parts = custom_id.replace("post_modal_", "").split("_")
+            post_type_str = custom_id_parts[0]
             post_type = PostType(post_type_str)
+            
+            # Extract response type for response posts
+            response_type = None
+            if post_type == PostType.RESPONSE and len(custom_id_parts) > 1:
+                response_type_str = custom_id_parts[1]
+                try:
+                    response_type = ResponseType(response_type_str)
+                except ValueError:
+                    response_type = ResponseType.REPLY  # Default fallback
             
             # Extract form data
             form_data = self._extract_modal_data(interaction["data"]["components"])
-            
-            # Import parse_tags utility
-            from ..shared.utils import parse_tags
             
             return PostData(
                 title=form_data.get("title", "").strip(),
@@ -383,6 +405,7 @@ class DiscordInteractionsHandler:
                 post_type=post_type,
                 tags=parse_tags(form_data.get("tags", "")),
                 target_url=form_data.get("target_url", "").strip() or None,
+                response_type=response_type,
                 media_url=form_data.get("media_url", "").strip() or None,
                 created_by=user_id
             )

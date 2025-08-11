@@ -34,8 +34,8 @@ The Discord Publish Bot required production deployment to enable real-world Disc
 ## Technical Implementation Completed
 
 ### Azure Infrastructure (100% Complete)
-**Resource Group:** `rg-discord-publish-bot-prod`  
-**Container App:** `ca-discord-publish-bot`  
+**Resource Group:** `<resource-group-name>`  
+**Container App:** `<container-app-name>`  
 **Container Apps Environment:** Production-ready with monitoring  
 **Configuration:** Scale-to-zero enabled for cost optimization
 
@@ -239,7 +239,7 @@ curl https://<app-name>.<region>.azurecontainerapps.io/health
 ```
 Discord Platform
        ↓ (HTTP Interactions)
-Azure Container Apps (ca-discord-publish-bot)
+Azure Container Apps (<container-app-name>)
        ↓ (Publishing API)
 GitHub Repository (luisquintanilla.me)
        ↓ (Content Creation)

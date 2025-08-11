@@ -220,11 +220,12 @@ class NoteModal(BasePostModal):
 class ResponseModal(BasePostModal):
     """Modal for creating response posts."""
     
-    def __init__(self, bot: DiscordBot):
+    def __init__(self, bot: DiscordBot, response_type: str = "reply"):
         super().__init__(bot, PostType.RESPONSE)
+        self.response_type = response_type
         
         self.target_url_input = discord.ui.TextInput(
-            label="Reply to URL",
+            label="Target URL",
             placeholder="https://example.com/original-post",
             max_length=500,
             required=True
@@ -232,8 +233,17 @@ class ResponseModal(BasePostModal):
         self.add_item(self.target_url_input)
     
     async def _add_type_specific_data(self, post_data: PostData):
-        """Add target URL for response posts."""
+        """Add target URL and response type for response posts."""
+        from ..shared.types import ResponseType
+        
         post_data.target_url = self.target_url_input.value.strip()
+        
+        # Use the response type from command parameter
+        try:
+            post_data.response_type = ResponseType(self.response_type)
+        except ValueError:
+            # Default to reply if invalid
+            post_data.response_type = ResponseType.REPLY
 
 
 class BookmarkModal(BasePostModal):
@@ -295,16 +305,24 @@ async def ping_command(interaction: discord.Interaction):
 
 
 @app_commands.command(name="post", description="Create a new post")
-@app_commands.describe(post_type="Type of post to create")
+@app_commands.describe(
+    post_type="Type of post to create",
+    response_type="Type of response (only for response posts)"
+)
 @app_commands.choices(
     post_type=[
         app_commands.Choice(name="note", value="note"),
         app_commands.Choice(name="response", value="response"),
         app_commands.Choice(name="bookmark", value="bookmark"),
         app_commands.Choice(name="media", value="media"),
+    ],
+    response_type=[
+        app_commands.Choice(name="reply", value="reply"),
+        app_commands.Choice(name="repost", value="reshare"),
+        app_commands.Choice(name="like", value="star"),
     ]
 )
-async def post_command(interaction: discord.Interaction, post_type: str):
+async def post_command(interaction: discord.Interaction, post_type: str, response_type: str = "reply"):
     """Main post command handler."""
     bot = interaction.client
     
@@ -327,7 +345,13 @@ async def post_command(interaction: discord.Interaction, post_type: str):
     try:
         post_type_enum = PostType(post_type)
         modal_class = modal_map[post_type_enum.value]
-        modal = modal_class(bot)
+        
+        # Pass response_type to ResponseModal if needed
+        if post_type_enum == PostType.RESPONSE:
+            modal = modal_class(bot, response_type)
+        else:
+            modal = modal_class(bot)
+            
         await interaction.response.send_modal(modal)
 
         logger.info(f"User {interaction.user.id} opened {post_type} modal")

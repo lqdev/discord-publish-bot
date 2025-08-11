@@ -318,7 +318,12 @@ class PublishingService:
                 })
             
             elif post_data.post_type in (PostType.RESPONSE, PostType.BOOKMARK):
-                response_type = "bookmark" if post_data.post_type == PostType.BOOKMARK else "reply"
+                # Use user-selected response type for responses, default to bookmark for bookmark posts
+                if post_data.post_type == PostType.RESPONSE and post_data.response_type:
+                    response_type = post_data.response_type.value
+                else:
+                    response_type = "bookmark" if post_data.post_type == PostType.BOOKMARK else "reply"
+                
                 date_str = now.strftime("%Y-%m-%d %H:%M -05:00")
                 frontmatter.update({
                     "targeturl": post_data.target_url,

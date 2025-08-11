@@ -17,6 +17,13 @@ class PostType(str, Enum):
     MEDIA = "media"
 
 
+class ResponseType(str, Enum):
+    """Supported response types for response posts."""
+    REPLY = "reply"
+    REPOST = "reshare"  # Discord shows "repost", frontmatter uses "reshare"
+    LIKE = "star"       # Discord shows "like", frontmatter uses "star"
+
+
 class DeploymentMode(str, Enum):
     """Application deployment modes."""
     WEBSOCKET = "websocket"  # Traditional Discord bot with WebSocket
@@ -53,6 +60,7 @@ class PostData(BaseModel):
     
     # Type-specific fields
     target_url: Optional[str] = Field(None, description="URL for responses and bookmarks")
+    response_type: Optional[ResponseType] = Field(None, description="Type of response (reply, repost, like)")
     media_url: Optional[str] = Field(None, description="Media URL for media posts")
     
     # Metadata
