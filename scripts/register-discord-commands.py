@@ -71,6 +71,12 @@ def create_command_definitions() -> List[Dict[str, Any]]:
                         {"name": "repost", "value": "reshare"},  # User sees "repost", maps to "reshare" in frontmatter
                         {"name": "like", "value": "star"}       # User sees "like", maps to "star" in frontmatter
                     ]
+                },
+                {
+                    "name": "attachment",
+                    "description": "Upload an image file (for media posts)",
+                    "type": 11,  # ATTACHMENT
+                    "required": False
                 }
             ]
         }
@@ -217,7 +223,9 @@ async def main():
             print("2. You should see dropdown choices for:")
             print("   - post_type: note, response, bookmark, media")
             print("   - response_type: reply, repost, like (for response posts)")
+            print("   - attachment: Upload file option (for media posts)")
             print("3. The response_type dropdown should appear when you select 'response' as post_type")
+            print("4. The attachment option allows file uploads for media posts")
         else:
             print("\n❌ Command registration failed!")
             print("Please check your Discord credentials and try again.")

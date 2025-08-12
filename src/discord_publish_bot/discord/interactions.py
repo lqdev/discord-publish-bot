@@ -190,9 +190,10 @@ class DiscordInteractionsHandler:
     def _handle_post_command(self, interaction: Dict[str, Any]) -> Dict[str, Any]:
         """Handle post slash command - show modal for post creation."""
         try:
-            # Get post type and response type from command options
+            # Get post type, response type, and attachment from command options
             post_type = PostType.NOTE  # Default
             response_type = "reply"    # Default
+            attachment = None          # Attachment data
             
             if "options" in interaction["data"]:
                 for option in interaction["data"]["options"]:
@@ -203,8 +204,48 @@ class DiscordInteractionsHandler:
                             logger.warning(f"Invalid post type: {option['value']}")
                     elif option["name"] == "response_type":
                         response_type = option["value"]
+                    elif option["name"] == "attachment":
+                        attachment = option.get("attachment")
+                        logger.info(f"Attachment received: {attachment}")
             
-            modal = self._create_post_modal(post_type, response_type)
+            # Debug logging for attachment
+            if attachment:
+                # Get attachment details from resolved data
+                resolved = interaction["data"].get("resolved", {})
+                attachments = resolved.get("attachments", {})
+                if attachment in attachments:
+                    attachment_data = attachments[attachment]
+                    logger.info(f"Attachment details: filename={attachment_data.get('filename')}, url={attachment_data.get('url')}, type={attachment_data.get('content_type')}")
+                else:
+                    logger.warning(f"Attachment {attachment} not found in resolved data")
+                    attachment_data = None
+            else:
+                logger.info("No attachment provided")
+                attachment_data = None
+            
+            # Validate attachment usage - only allow attachments for media posts
+            if attachment and post_type != PostType.MEDIA:
+                return {
+                    "type": InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+                    "data": {
+                        "content": "❌ File attachments are only supported for media posts. Use `/post media` with your file.",
+                        "flags": 64  # Ephemeral
+                    }
+                }
+            
+            # For media posts with attachment, validate file type
+            if post_type == PostType.MEDIA and attachment_data:
+                content_type = attachment_data.get("content_type")
+                if not content_type or not content_type.startswith(('image/', 'video/', 'audio/')):
+                    return {
+                        "type": InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+                        "data": {
+                            "content": f"❌ Unsupported file type: {content_type or 'unknown'}. Please upload an image, video, or audio file.",
+                            "flags": 64  # Ephemeral
+                        }
+                    }
+            
+            modal = self._create_post_modal(post_type, response_type, attachment_data=attachment_data)
             
             return {
                 "type": InteractionResponseType.MODAL,
@@ -215,7 +256,7 @@ class DiscordInteractionsHandler:
             logger.error(f"Error handling post command: {e}")
             raise DiscordCommandError(f"Failed to handle post command: {e}")
     
-    def _create_post_modal(self, post_type: PostType, response_type: str = "reply") -> Dict[str, Any]:
+    def _create_post_modal(self, post_type: PostType, response_type: str = "reply", attachment_data=None) -> Dict[str, Any]:
         """Create modal for post creation based on type."""
         # Include response_type in custom_id for response posts
         if post_type == PostType.RESPONSE:
@@ -299,16 +340,50 @@ class DiscordInteractionsHandler:
             })
         
         elif post_type == PostType.MEDIA:
+            # Handle attachment data for media posts
+            if attachment_data:
+                attachment_url = attachment_data.get("url")
+                attachment_filename = attachment_data.get("filename", "file")
+                
+                components.append({
+                    "type": ComponentType.ACTION_ROW,
+                    "components": [{
+                        "type": ComponentType.TEXT_INPUT,
+                        "custom_id": "media_url",
+                        "label": "Media URL",
+                        "style": 1,  # Short
+                        "placeholder": f"Using uploaded file: {attachment_filename}",
+                        "value": attachment_url,  # Pre-fill with attachment URL
+                        "required": False,
+                        "max_length": 500
+                    }]
+                })
+            else:
+                # Standard URL input when no attachment
+                components.append({
+                    "type": ComponentType.ACTION_ROW,
+                    "components": [{
+                        "type": ComponentType.TEXT_INPUT,
+                        "custom_id": "media_url",
+                        "label": "Media URL",
+                        "style": 1,  # Short
+                        "placeholder": "https://example.com/image.jpg",
+                        "required": False,
+                        "max_length": 500
+                    }]
+                })
+            
+            # Add alt text field for accessibility
             components.append({
                 "type": ComponentType.ACTION_ROW,
                 "components": [{
                     "type": ComponentType.TEXT_INPUT,
-                    "custom_id": "media_url",
-                    "label": "Media URL",
-                    "style": 1,  # Short
-                    "placeholder": "https://example.com/image.jpg",
+                    "custom_id": "alt_text",
+                    "label": "Alt Text (for accessibility)",
+                    "style": 2,  # Paragraph
+                    "placeholder": "Describe the image for screen readers...",
                     "required": False,
-                    "max_length": 500
+                    "max_length": 200
                 }]
             })
         
@@ -407,6 +482,7 @@ class DiscordInteractionsHandler:
                 target_url=form_data.get("target_url", "").strip() or None,
                 response_type=response_type,
                 media_url=form_data.get("media_url", "").strip() or None,
+                media_alt=form_data.get("alt_text", "").strip() or None,
                 created_by=user_id
             )
             
@@ -447,12 +523,3 @@ def extract_component_value(components: list, field_name: str) -> Optional[str]:
     """Extract a specific field value from Discord modal components."""
     data = extract_component_data(components)
     return data.get(field_name)
-    
-    def _parse_tags_from_form(self, tags_input: str) -> Optional[list[str]]:
-        """Parse tags from form input."""
-        if not tags_input:
-            return None
-        
-        from ..shared import parse_tags
-        tags = parse_tags(tags_input)
-        return tags if tags else None

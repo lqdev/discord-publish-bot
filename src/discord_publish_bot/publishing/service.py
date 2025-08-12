@@ -124,7 +124,7 @@ class PublishingService:
             frontmatter = self._generate_frontmatter(post_data)
             
             # Build markdown content
-            content = self._build_markdown_content(frontmatter, post_data.content)
+            content = self._build_markdown_content(frontmatter, post_data.content, post_data)
             
             # Generate filename and path
             filename = generate_filename(post_data.post_type, post_data.title)
@@ -341,8 +341,7 @@ class PublishingService:
                     "post_type": "media",
                     "published_date": date_with_tz,
                 })
-                if post_data.media_url:
-                    frontmatter["media_url"] = post_data.media_url
+                # Note: media_url is handled in :::media block, not frontmatter
             
             # Add tags as inline array (site convention)
             if post_data.tags:
@@ -389,19 +388,25 @@ class PublishingService:
         
         return '\n'.join(lines)
 
-    def _build_markdown_content(self, frontmatter: Dict[str, Any], content: str) -> str:
+    def _build_markdown_content(self, frontmatter: Dict[str, Any], content: str, post_data: PostData) -> str:
         """
-        Build complete markdown file content.
+        Build complete markdown file content with media block support.
         
         Args:
             frontmatter: Post frontmatter
             content: Post content
+            post_data: Complete post data for media block generation
             
         Returns:
             Complete markdown content
         """
         # Sanitize content
         clean_content = sanitize_content(content)
+        
+        # For media posts, append :::media block if media URL exists
+        if post_data.post_type == PostType.MEDIA and post_data.media_url:
+            media_block = self._generate_media_block(post_data)
+            clean_content = f"{clean_content}\n\n{media_block}"
         
         # Format frontmatter as YAML
         yaml_frontmatter = self._format_frontmatter_inline(frontmatter)
@@ -410,6 +415,42 @@ class PublishingService:
         markdown_content = f"---\n{yaml_frontmatter}\n---\n\n{clean_content}\n"
         
         return markdown_content
+
+    def _generate_media_block(self, post_data: PostData) -> str:
+        """
+        Generate :::media block for media posts.
+        
+        Args:
+            post_data: Post data containing media information
+            
+        Returns:
+            Formatted :::media block
+        """
+        lines = [":::media"]
+        lines.append(f"- url: \"{post_data.media_url}\"")
+        
+        # Add alt text if provided
+        if post_data.media_alt:
+            lines.append(f"  alt: \"{post_data.media_alt}\"")
+        
+        # Detect media type from URL extension or default to image
+        media_type = "image"
+        if post_data.media_url:
+            url_lower = post_data.media_url.lower()
+            if any(ext in url_lower for ext in ['.mp4', '.mov', '.avi', '.webm', '.mkv']):
+                media_type = "video"
+            elif any(ext in url_lower for ext in ['.mp3', '.wav', '.ogg', '.m4a']):
+                media_type = "audio"
+        
+        lines.append(f"  mediaType: \"{media_type}\"")
+        lines.append(f"  aspectRatio: \"landscape\"")  # Default aspect ratio
+        
+        # Use title as caption
+        if post_data.title:
+            lines.append(f"  caption: \"{post_data.title}\"")
+        
+        lines.append(":::media")
+        return "\n".join(lines)
 
     def _parse_discord_message(self, message: str, user_id: str) -> PostData:
         """

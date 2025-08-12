@@ -266,23 +266,60 @@ class BookmarkModal(BasePostModal):
 
 
 class MediaModal(BasePostModal):
-    """Modal for creating media posts."""
+    """Modal for creating media posts with optional file attachment support."""
     
-    def __init__(self, bot: DiscordBot):
+    def __init__(self, bot: DiscordBot, attachment_url=None, attachment_filename=None, attachment_content_type=None):
         super().__init__(bot, PostType.MEDIA)
         
-        self.media_url_input = discord.ui.TextInput(
-            label="Media URL",
-            placeholder="https://example.com/image.jpg",
-            max_length=500,
-            required=False
-        )
+        # Store attachment information
+        self.attachment_url = attachment_url
+        self.attachment_filename = attachment_filename
+        self.attachment_content_type = attachment_content_type
+        
+        # Configure media URL input based on attachment
+        if attachment_url:
+            # Pre-fill with uploaded file URL
+            self.media_url_input = discord.ui.TextInput(
+                label="Media URL",
+                placeholder=f"Using uploaded file: {attachment_filename or 'file'}",
+                default=attachment_url,
+                max_length=500,
+                required=False
+            )
+        else:
+            # Standard URL input
+            self.media_url_input = discord.ui.TextInput(
+                label="Media URL",
+                placeholder="https://example.com/image.jpg",
+                max_length=500,
+                required=False
+            )
+        
         self.add_item(self.media_url_input)
+        
+        # Add alt text input for accessibility
+        self.alt_text_input = discord.ui.TextInput(
+            label="Alt Text (for accessibility)",
+            placeholder="Describe the image for screen readers...",
+            max_length=200,
+            required=False,
+            style=discord.TextStyle.paragraph
+        )
+        self.add_item(self.alt_text_input)
     
     async def _add_type_specific_data(self, post_data: PostData):
-        """Add media URL for media posts."""
-        if self.media_url_input.value:
-            post_data.media_url = self.media_url_input.value.strip()
+        """Add media-specific data to post with validation."""
+        # Use attachment URL if available, otherwise use manual URL input
+        media_url = self.attachment_url or self.media_url_input.value
+        
+        if not media_url:
+            raise ValueError("Media posts require either an uploaded file or a media URL. Please upload a file using `/post media [attach file]` or provide a URL.")
+        
+        post_data.media_url = media_url.strip()
+        
+        # Add alt text if provided
+        if self.alt_text_input.value:
+            post_data.media_alt = self.alt_text_input.value.strip()
 
 
 # Global commands
@@ -307,7 +344,8 @@ async def ping_command(interaction: discord.Interaction):
 @app_commands.command(name="post", description="Create a new post")
 @app_commands.describe(
     post_type="Type of post to create",
-    response_type="Type of response (only for response posts)"
+    response_type="Type of response (only for response posts)",
+    attachment="Upload a file for media posts (optional)"
 )
 @app_commands.choices(
     post_type=[
@@ -322,9 +360,20 @@ async def ping_command(interaction: discord.Interaction):
         app_commands.Choice(name="like", value="star"),
     ]
 )
-async def post_command(interaction: discord.Interaction, post_type: str, response_type: str = "reply"):
-    """Main post command handler."""
+async def post_command(
+    interaction: discord.Interaction, 
+    post_type: str, 
+    response_type: str = "reply",
+    attachment: Optional[discord.Attachment] = None
+):
+    """Main post command handler with optional file attachment support."""
     bot = interaction.client
+    
+    # Debug logging for attachment
+    if attachment:
+        logger.info(f"Attachment received: {attachment.filename}, URL: {attachment.url}, Type: {attachment.content_type}")
+    else:
+        logger.info("No attachment provided")
     
     # Check authorization
     if not bot.is_authorized(interaction.user.id):
@@ -333,6 +382,23 @@ async def post_command(interaction: discord.Interaction, post_type: str, respons
             ephemeral=True
         )
         return
+
+    # Validate attachment usage - only allow attachments for media posts
+    if attachment and post_type != "media":
+        await interaction.response.send_message(
+            "❌ File attachments are only supported for media posts. Use `/post media` with your file.",
+            ephemeral=True
+        )
+        return
+    
+    # For media posts with attachment, validate file type
+    if post_type == "media" and attachment:
+        if not attachment.content_type or not attachment.content_type.startswith(('image/', 'video/', 'audio/')):
+            await interaction.response.send_message(
+                f"❌ Unsupported file type: {attachment.content_type or 'unknown'}. Please upload an image, video, or audio file.",
+                ephemeral=True
+            )
+            return
 
     # Route to appropriate modal
     modal_map = {
@@ -346,9 +412,17 @@ async def post_command(interaction: discord.Interaction, post_type: str, respons
         post_type_enum = PostType(post_type)
         modal_class = modal_map[post_type_enum.value]
         
-        # Pass response_type to ResponseModal if needed
+        # Create modal with appropriate parameters
         if post_type_enum == PostType.RESPONSE:
             modal = modal_class(bot, response_type)
+        elif post_type_enum == PostType.MEDIA and attachment:
+            # Pass attachment information to MediaModal
+            modal = modal_class(
+                bot, 
+                attachment_url=attachment.url,
+                attachment_filename=attachment.filename,
+                attachment_content_type=attachment.content_type
+            )
         else:
             modal = modal_class(bot)
             

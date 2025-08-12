@@ -62,6 +62,7 @@ class PostData(BaseModel):
     target_url: Optional[str] = Field(None, description="URL for responses and bookmarks")
     response_type: Optional[ResponseType] = Field(None, description="Type of response (reply, repost, like)")
     media_url: Optional[str] = Field(None, description="Media URL for media posts")
+    media_alt: Optional[str] = Field(None, description="Alt text for media accessibility")
     
     # Metadata
     author: Optional[str] = Field(None, description="Post author")
