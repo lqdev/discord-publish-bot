@@ -300,18 +300,19 @@ class PublishingService:
             FrontmatterError: If frontmatter generation fails
         """
         try:
-            # Use Eastern Time (-05:00) as per site convention
-            from datetime import timezone, timedelta
-            est = timezone(timedelta(hours=-5))
-            now = datetime.now(est)
+            # Use Eastern timezone consistently regardless of server timezone
+            # This ensures dates are always in Eastern time as expected by the site
+            from datetime import timedelta
+            eastern_tz = timezone(timedelta(hours=-5))
+            now_eastern = datetime.now(eastern_tz)
             
             # Base frontmatter
             frontmatter = {
                 "title": post_data.title,
             }
             
-            # Generate base date without timezone (consistent with dt_published logic)
-            base_date = now.strftime("%Y-%m-%d %H:%M")
+            # Generate date in Eastern timezone format
+            base_date = now_eastern.strftime("%Y-%m-%d %H:%M")
             date_with_tz = f"{base_date} -05:00"
             
             # Type-specific fields using established site schema
