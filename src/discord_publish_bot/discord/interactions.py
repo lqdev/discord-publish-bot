@@ -205,23 +205,24 @@ class DiscordInteractionsHandler:
                     elif option["name"] == "response_type":
                         response_type = option["value"]
                     elif option["name"] == "attachment":
-                        attachment = option.get("attachment")
-                        logger.info(f"Attachment received: {attachment}")
+                        attachment_id = option.get("value")  # Discord sends attachment ID in value
+                        logger.info(f"Attachment ID received: {attachment_id}")
+                        
+                        # Get attachment details from resolved data
+                        resolved = interaction["data"].get("resolved", {})
+                        attachments = resolved.get("attachments", {})
+                        if attachment_id and attachment_id in attachments:
+                            attachment = attachments[attachment_id]
+                            logger.info(f"Attachment details: filename={attachment.get('filename')}, url={attachment.get('url')}, type={attachment.get('content_type')}")
+                        else:
+                            logger.warning(f"Attachment {attachment_id} not found in resolved data")
+                            attachment = None
             
-            # Debug logging for attachment
+            # Debug logging for attachment processing
             if attachment:
-                # Get attachment details from resolved data
-                resolved = interaction["data"].get("resolved", {})
-                attachments = resolved.get("attachments", {})
-                if attachment in attachments:
-                    attachment_data = attachments[attachment]
-                    logger.info(f"Attachment details: filename={attachment_data.get('filename')}, url={attachment_data.get('url')}, type={attachment_data.get('content_type')}")
-                else:
-                    logger.warning(f"Attachment {attachment} not found in resolved data")
-                    attachment_data = None
+                logger.info("Attachment processing completed successfully")
             else:
                 logger.info("No attachment provided")
-                attachment_data = None
             
             # Validate attachment usage - only allow attachments for media posts
             if attachment and post_type != PostType.MEDIA:
@@ -234,8 +235,8 @@ class DiscordInteractionsHandler:
                 }
             
             # For media posts with attachment, validate file type
-            if post_type == PostType.MEDIA and attachment_data:
-                content_type = attachment_data.get("content_type")
+            if post_type == PostType.MEDIA and attachment:
+                content_type = attachment.get("content_type")
                 if not content_type or not content_type.startswith(('image/', 'video/', 'audio/')):
                     return {
                         "type": InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -245,7 +246,7 @@ class DiscordInteractionsHandler:
                         }
                     }
             
-            modal = self._create_post_modal(post_type, response_type, attachment_data=attachment_data)
+            modal = self._create_post_modal(post_type, response_type, attachment_data=attachment)
             
             return {
                 "type": InteractionResponseType.MODAL,
