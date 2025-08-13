@@ -8,7 +8,27 @@
 
 A production-ready Discord bot that automatically publishes Discord posts to GitHub repositories as formatted markdown files, enabling seamless content publishing to static sites. Now deployed and operational on Azure Container Apps with scale-to-zero cost optimization **plus complete Discord attachment support**.
 
-## 🚀 Production Features
+## 🚀 Quick Start
+
+### For Users (Publishing Content)
+1. **Get bot access** from your site administrator
+2. **Type `/post note`** in Discord where bot is installed  
+3. **Fill the modal** with your content
+4. **Submit** to create GitHub PR automatically
+5. **Merge PR** to publish on your site
+
+👉 **[Complete User Guide](docs/team/user-guide.md)** for all commands and workflows
+
+### For Developers (Contributing)
+1. **Clone repository**: `git clone <repository-url>`
+2. **Run setup**: `python setup.py` (installs UV + dependencies)
+3. **Configure credentials**: Follow [credential setup guide](docs/team/credential-setup-guide.md)
+4. **Start development**: `uv run discord-bot` and `uv run publishing-api`
+5. **Run tests**: `uv run pytest tests/unit/ -v` (should see 46/46 passing)
+
+👉 **[Complete Developer Onboarding](docs/team/onboarding-guide.md)** for full setup and contribution guide
+
+## Production Features
 
 ### ✅ Complete Discord Integration (Including Attachments)
 - **Discord Commands**: `/post note`, `/post response`, `/post bookmark`, `/post media [attachment]`
@@ -193,12 +213,25 @@ discord-publish-bot/
 
 ## Documentation
 
-- [Product Requirements Document](projects/active/discord-publish-bot.md)
-- [Technical Specification](specs/technical/discord-publish-bot-technical-spec.md)
-- [API Documentation](specs/api/discord-publishing-api.md)
-- [Architecture Decision Records](docs/adr/)
-- [Project Backlog](backlog.md)
-- [Changelog](changelog.md)
+### 📖 User Documentation
+- **[User Guide](docs/team/user-guide.md)** - Complete guide for Discord bot users
+- **[Getting Started](docs/team/user-guide.md#quick-start---publish-content-in-30-seconds)** - Publish content in 30 seconds
+- **[Discord Commands Reference](docs/team/user-guide.md#discord-commands-reference)** - All `/post` commands explained
+
+### 👨‍💻 Developer Documentation  
+- **[Developer Onboarding Guide](docs/team/onboarding-guide.md)** - Complete setup for new contributors
+- **[Credential Setup Guide](docs/team/credential-setup-guide.md)** - Step-by-step Discord & GitHub configuration
+- **[Security Guidelines](docs/team/security-guidelines.md)** - Security best practices and verification
+
+### 🏗️ Technical Documentation
+- **[Technical Specification](specs/technical/discord-publish-bot-technical-spec.md)** - Complete system architecture
+- **[API Documentation](specs/api/discord-publishing-api.md)** - Publishing API reference
+- **[Architecture Decision Records](docs/adr/)** - Key architectural decisions and rationale
+
+### 📋 Project Management
+- **[Project Backlog](backlog.md)** - Sprint planning and feature roadmap
+- **[Changelog](changelog.md)** - Detailed development progress and releases
+- **[Roadmap](roadmap.md)** - Project completion summary and achievements
 
 ## Development
 
