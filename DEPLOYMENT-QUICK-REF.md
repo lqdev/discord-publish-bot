@@ -13,6 +13,11 @@ az containerapp update \
   --resource-group <your-resource-group> \
   --set-env-vars \
     ENVIRONMENT=production \
+    AZURE_STORAGE_USE_RELATIVE_PATHS=true \
+    AZURE_STORAGE_USE_SAS_TOKENS=false \
+    ENABLE_AZURE_STORAGE=true \
+    AZURE_STORAGE_ACCOUNT_NAME=secretref:azure-storage-account-name \
+    AZURE_STORAGE_CONTAINER_NAME=secretref:azure-storage-container-name \
     DISCORD_BOT_TOKEN=secretref:discord-bot-token \
     DISCORD_APPLICATION_ID=secretref:discord-application-id \
     DISCORD_PUBLIC_KEY=secretref:discord-public-key \

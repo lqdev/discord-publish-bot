@@ -118,6 +118,24 @@ Write-Host "`n🔐 API CONFIGURATION" -ForegroundColor Blue
 
 $apiKey = Get-SecureSecret "API_KEY" "API key for authentication (32+ characters)" $envVars["API_KEY"]
 
+# Azure Storage Configuration
+Write-Host "`n☁️ AZURE STORAGE CONFIGURATION" -ForegroundColor Blue
+Write-Host "For permanent media hosting in Discord bot" -ForegroundColor Gray
+
+$storageAccountName = if ($envVars["AZURE_STORAGE_ACCOUNT_NAME"]) { 
+    $envVars["AZURE_STORAGE_ACCOUNT_NAME"]
+} else { 
+    Read-Host "Azure Storage Account Name (existing account)" 
+}
+
+$storageContainerName = if ($envVars["AZURE_STORAGE_CONTAINER_NAME"]) { 
+    $envVars["AZURE_STORAGE_CONTAINER_NAME"]
+} else { 
+    $defaultContainer = "discord-media"
+    $userInput = Read-Host "Storage Container Name (default: $defaultContainer)"
+    if ([string]::IsNullOrWhiteSpace($userInput)) { $defaultContainer } else { $userInput }
+}
+
 # Create secrets in Azure Container Apps
 Write-Host "`n🚀 Creating secrets in Azure Container Apps..." -ForegroundColor Green
 
@@ -143,6 +161,12 @@ if ($githubRepo) {
 }
 if ($apiKey) {
     $secretsToCreate += @{name="api-key"; value=$apiKey}
+}
+if ($storageAccountName) {
+    $secretsToCreate += @{name="azure-storage-account-name"; value=$storageAccountName}
+}
+if ($storageContainerName) {
+    $secretsToCreate += @{name="azure-storage-container-name"; value=$storageContainerName}
 }
 
 foreach ($secret in $secretsToCreate) {

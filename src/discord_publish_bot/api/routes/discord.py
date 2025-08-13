@@ -66,7 +66,7 @@ async def discord_interactions(
     
     # Handle interaction
     try:
-        response = discord_handler.handle_interaction(interaction)
+        response = await discord_handler.handle_interaction(interaction)
         
         # If this is a deferred modal submission, process it in the background
         if (interaction.get("type") == 5 and  # MODAL_SUBMIT

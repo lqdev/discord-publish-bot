@@ -10,6 +10,7 @@ from .settings import (
     GitHubSettings,
     APISettings,
     PublishingSettings,
+    AzureStorageSettings,
     get_settings,
     reset_settings,
 )
@@ -20,6 +21,7 @@ __all__ = [
     "GitHubSettings",
     "APISettings",
     "PublishingSettings",
+    "AzureStorageSettings",
     "get_settings",
     "reset_settings",
 ]

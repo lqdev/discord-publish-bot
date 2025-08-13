@@ -108,7 +108,7 @@ def get_discord_handler() -> DiscordInteractionsHandler:
             )
         
         try:
-            _discord_handler = DiscordInteractionsHandler(settings.discord)
+            _discord_handler = DiscordInteractionsHandler(settings)
             logger.info("Discord interactions handler initialized")
         except Exception as e:
             logger.error(f"Failed to initialize Discord handler: {e}")

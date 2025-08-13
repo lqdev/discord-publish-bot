@@ -6,11 +6,12 @@ This enables serverless deployment with scale-to-zero capabilities.
 """
 
 import logging
+import os
 from typing import Dict, Any, Optional
 from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
 
-from ..config import DiscordSettings
+from ..config import AppSettings
 from ..shared import (
     DiscordSignatureError,
     DiscordCommandError,
@@ -58,19 +59,19 @@ class DiscordInteractionsHandler:
     suitable for serverless environments.
     """
     
-    def __init__(self, settings: DiscordSettings):
+    def __init__(self, settings: AppSettings):
         """
         Initialize interactions handler.
         
         Args:
-            settings: Discord configuration settings
+            settings: Application configuration settings
         """
         self.settings = settings
         
-        if not settings.public_key:
+        if not settings.discord.public_key:
             raise ValueError("Discord public key is required for HTTP interactions")
         
-        self.verify_key = VerifyKey(bytes.fromhex(settings.public_key))
+        self.verify_key = VerifyKey(bytes.fromhex(settings.discord.public_key))
         logger.info("Initialized Discord interactions handler")
     
     def verify_signature(self, signature: str, timestamp: str, body: bytes) -> bool:
@@ -99,7 +100,7 @@ class DiscordInteractionsHandler:
             logger.error(f"Signature verification error: {e}")
             raise DiscordSignatureError(f"Signature verification error: {e}")
     
-    def handle_interaction(self, interaction: Dict[str, Any]) -> Dict[str, Any]:
+    async def handle_interaction(self, interaction: Dict[str, Any]) -> Dict[str, Any]:
         """
         Handle incoming Discord interaction.
         
@@ -120,7 +121,7 @@ class DiscordInteractionsHandler:
                 return {"type": InteractionResponseType.PONG}
             
             if interaction_type == InteractionType.APPLICATION_COMMAND:
-                return self._handle_application_command(interaction)
+                return await self._handle_application_command(interaction)
             
             if interaction_type == InteractionType.MODAL_SUBMIT:
                 return self._handle_modal_submit(interaction)
@@ -139,7 +140,7 @@ class DiscordInteractionsHandler:
             logger.error(f"Error handling interaction: {e}")
             raise DiscordCommandError(f"Failed to handle interaction: {e}")
     
-    def _handle_application_command(self, interaction: Dict[str, Any]) -> Dict[str, Any]:
+    async def _handle_application_command(self, interaction: Dict[str, Any]) -> Dict[str, Any]:
         """Handle slash command interactions."""
         try:
             command_name = interaction["data"]["name"]
@@ -148,7 +149,7 @@ class DiscordInteractionsHandler:
             logger.info(f"Processing command {command_name} from user {user_id}")
             
             # Authorization check
-            if user_id != self.settings.authorized_user_id:
+            if user_id != self.settings.discord.authorized_user_id:
                 logger.warning(f"Unauthorized user {user_id} attempted to use command {command_name}")
                 return {
                     "type": InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -162,7 +163,7 @@ class DiscordInteractionsHandler:
                 return self._handle_ping_command()
             
             if command_name == "post":
-                return self._handle_post_command(interaction)
+                return await self._handle_post_command(interaction)
             
             logger.warning(f"Unknown command: {command_name}")
             return {
@@ -187,7 +188,7 @@ class DiscordInteractionsHandler:
             }
         }
     
-    def _handle_post_command(self, interaction: Dict[str, Any]) -> Dict[str, Any]:
+    async def _handle_post_command(self, interaction: Dict[str, Any]) -> Dict[str, Any]:
         """Handle post slash command - show modal for post creation."""
         try:
             # Get post type, response type, and attachment from command options
@@ -245,6 +246,10 @@ class DiscordInteractionsHandler:
                             "flags": 64  # Ephemeral
                         }
                     }
+                
+                # Note: Azure Storage upload will happen during PR creation, not here
+                # This keeps the modal response fast and within Discord's 3-second timeout
+                logger.info(f"Media attachment detected: {attachment.get('filename')}, will upload to Azure during PR creation")
             
             modal = self._create_post_modal(post_type, response_type, attachment_data=attachment)
             
@@ -400,7 +405,7 @@ class DiscordInteractionsHandler:
             logger.info(f"Processing modal submission {custom_id} from user {user_id}")
             
             # Authorization check
-            if user_id != self.settings.authorized_user_id:
+            if user_id != self.settings.discord.authorized_user_id:
                 logger.warning(f"Unauthorized user {user_id} attempted modal submission")
                 return {
                     "type": InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,

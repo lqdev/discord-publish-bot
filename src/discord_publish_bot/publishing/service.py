@@ -120,6 +120,9 @@ class PublishingService:
             # Validate post data
             self._validate_post_data(post_data)
             
+            # Upload media to Azure Storage if needed (replaces ephemeral Discord URLs)
+            post_data = await self._process_media_uploads(post_data)
+            
             # Generate frontmatter
             frontmatter = self._generate_frontmatter(post_data)
             
@@ -278,6 +281,90 @@ class PublishingService:
                     "Invalid media URL format",
                     field="media_url"
                 )
+
+    async def _process_media_uploads(self, post_data: PostData) -> PostData:
+        """
+        Process media uploads to Azure Storage, replacing ephemeral Discord URLs with permanent ones.
+        
+        This method:
+        1. Detects Discord URLs in media_url and content
+        2. Uploads them to Azure Storage 
+        3. Replaces URLs with permanent Azure URLs
+        4. Returns updated PostData with permanent URLs
+        
+        Args:
+            post_data: Original post data potentially containing Discord URLs
+            
+        Returns:
+            Updated post data with permanent URLs
+        """
+        try:
+            from ..storage import AzureStorageService
+            from ..config import get_settings
+            
+            settings = get_settings()
+            
+            # Skip processing if Azure Storage is not enabled
+            if not settings.azure_storage.enabled:
+                logger.info("Azure Storage not enabled, keeping original URLs")
+                return post_data
+            
+            # Create a copy of post_data to modify
+            updated_data = post_data.model_copy()
+            storage_service = AzureStorageService()
+            
+            # Process media_url if it's a Discord URL
+            if updated_data.media_url and self._is_discord_url(updated_data.media_url):
+                logger.info(f"Uploading Discord media to Azure Storage: {updated_data.media_url}")
+                
+                try:
+                    # Extract filename from Discord URL
+                    filename = self._extract_filename_from_discord_url(updated_data.media_url)
+                    
+                    # Upload to Azure Storage
+                    permanent_url = await storage_service.upload_discord_attachment(
+                        discord_url=updated_data.media_url,
+                        filename=filename,
+                        guild_id=None,  # Could extract from URL if needed
+                        channel_id=None,  # Could extract from URL if needed
+                        content_type=None  # Will be detected during download
+                    )
+                    
+                    updated_data.media_url = permanent_url
+                    logger.info(f"Successfully replaced Discord URL with Azure URL: {permanent_url}")
+                    
+                except Exception as e:
+                    logger.error(f"Failed to upload media to Azure Storage: {e}")
+                    logger.warning("Keeping original Discord URL as fallback")
+            
+            # TODO: Process Discord URLs in content text as well (future enhancement)
+            # This would require parsing markdown/text content for Discord CDN URLs
+            
+            return updated_data
+            
+        except Exception as e:
+            logger.error(f"Error processing media uploads: {e}")
+            logger.warning("Keeping original URLs due to processing error")
+            return post_data
+
+    def _is_discord_url(self, url: str) -> bool:
+        """Check if URL is a Discord CDN URL."""
+        return "cdn.discordapp.com" in url or "media.discordapp.net" in url
+
+    def _extract_filename_from_discord_url(self, url: str) -> str:
+        """Extract filename from Discord CDN URL."""
+        from urllib.parse import urlparse, unquote
+        
+        parsed = urlparse(url)
+        # Discord URLs typically end with the filename after the last slash
+        path_parts = parsed.path.split('/')
+        if path_parts:
+            filename = unquote(path_parts[-1])
+            # Remove Discord's attachment ID prefix if present (format: {id}_{filename})
+            if '_' in filename and filename.split('_')[0].isdigit():
+                filename = '_'.join(filename.split('_')[1:])
+            return filename
+        return "discord_attachment.bin"  # Fallback filename
 
     def _generate_frontmatter(self, post_data: PostData) -> Dict[str, Any]:
         """

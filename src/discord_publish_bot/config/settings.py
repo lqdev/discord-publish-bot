@@ -124,6 +124,48 @@ class PublishingSettings(BaseModel):
         return v
 
 
+class AzureStorageSettings(BaseModel):
+    """Azure Storage configuration for permanent media hosting."""
+    
+    model_config = ConfigDict(extra='ignore')
+    
+    # Storage Account Configuration
+    account_name: Optional[str] = Field(None, description="Azure Storage Account name")
+    container_name: str = Field(default="discord-media", description="Blob container for Discord media")
+    cdn_endpoint: Optional[str] = Field(None, description="Azure CDN endpoint for improved performance")
+    
+    # Media Type Folder Configuration
+    images_folder: str = Field(default="images", description="Folder for image files")
+    videos_folder: str = Field(default="videos", description="Folder for video files")
+    audio_folder: str = Field(default="audio", description="Folder for audio files")
+    documents_folder: str = Field(default="documents", description="Folder for document files")
+    other_folder: str = Field(default="other", description="Folder for other file types")
+    
+    # Feature Flags
+    enabled: bool = Field(default=False, description="Enable Azure Storage for media hosting")
+    use_relative_paths: bool = Field(default=True, description="Use relative paths for domain-mapped containers")
+    use_sas_tokens: bool = Field(default=True, description="Use SAS tokens for secure access (recommended)")
+    sas_expiry_hours: int = Field(default=8760, description="SAS token expiry in hours (default: 1 year)")
+    
+    @validator('account_name')
+    def validate_account_name(cls, v):
+        if v is not None and not v.islower():
+            raise ValueError('Azure Storage account name must be lowercase')
+        return v
+    
+    @validator('container_name')
+    def validate_container_name(cls, v):
+        if not v.islower() or not v.replace('-', '').isalnum():
+            raise ValueError('Container name must be lowercase alphanumeric with hyphens')
+        return v
+    
+    @validator('images_folder', 'videos_folder', 'audio_folder', 'documents_folder', 'other_folder')
+    def validate_folder_names(cls, v):
+        if not v.islower() or not v.replace('-', '').replace('_', '').isalnum():
+            raise ValueError('Folder names must be lowercase alphanumeric with hyphens or underscores')
+        return v
+
+
 class AppSettings(BaseSettings):
     """
     Main application settings.
@@ -157,6 +199,7 @@ class AppSettings(BaseSettings):
     github: GitHubSettings  
     api: APISettings
     publishing: PublishingSettings
+    azure_storage: AzureStorageSettings
     
     @classmethod
     def from_env(cls) -> "AppSettings":
@@ -193,6 +236,21 @@ class AppSettings(BaseSettings):
             publishing=PublishingSettings(
                 site_base_url=os.getenv("SITE_BASE_URL"),
                 default_author=os.getenv("DEFAULT_AUTHOR"),
+            ),
+            
+            azure_storage=AzureStorageSettings(
+                account_name=os.getenv("AZURE_STORAGE_ACCOUNT_NAME"),
+                container_name=os.getenv("AZURE_STORAGE_CONTAINER_NAME", "discord-media"),
+                cdn_endpoint=os.getenv("AZURE_STORAGE_CDN_ENDPOINT"),
+                images_folder=os.getenv("AZURE_STORAGE_IMAGES_FOLDER", "images"),
+                videos_folder=os.getenv("AZURE_STORAGE_VIDEOS_FOLDER", "videos"),
+                audio_folder=os.getenv("AZURE_STORAGE_AUDIO_FOLDER", "audio"),
+                documents_folder=os.getenv("AZURE_STORAGE_DOCUMENTS_FOLDER", "documents"),
+                other_folder=os.getenv("AZURE_STORAGE_OTHER_FOLDER", "other"),
+                enabled=os.getenv("ENABLE_AZURE_STORAGE", "false").lower() == "true",
+                use_relative_paths=os.getenv("AZURE_STORAGE_USE_RELATIVE_PATHS", "true").lower() == "true",
+                use_sas_tokens=os.getenv("AZURE_STORAGE_USE_SAS_TOKENS", "true").lower() == "true",
+                sas_expiry_hours=int(os.getenv("AZURE_STORAGE_SAS_EXPIRY_HOURS", "8760")),
             )
         )
     
