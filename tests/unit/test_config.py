@@ -294,6 +294,6 @@ class TestConfigurationUtilities:
         # Tokens should not appear in full in string representation
         # Note: Current implementation shows full tokens, this is a known limitation
         # In production, consider implementing proper masking
-        assert "MTIzNDU2Nzg5MDEyMzQ1Njc4.FAKE.TEST_TOKEN_NEVER_REAL_SAFE_FOR_TESTING" in settings_str  # Currently visible
+        assert "FAKE_TEST_TOKEN.NEVER_REAL.OBVIOUSLY_FAKE_FOR_TESTING" in settings_str  # Currently visible
         assert "ghp_FAKE_TEST_TOKEN_SAFE_1234567890abcdef_NEVER_REAL" in settings_str  # Currently visible  
         assert "test_api_key_SAFE_FAKE_1234567890abcdef_NEVER_REAL" in settings_str  # Currently visible
