@@ -203,7 +203,7 @@ graph TB
 
 Each post type has specific frontmatter generation and file organization:
 
-**Notes:** `posts/notes/YYYY-MM-DD-title-slug.md`
+**Notes:** `_src/notes/YYYY-MM-DD-title-slug.md`
 ```yaml
 ---
 type: note
@@ -214,7 +214,7 @@ tags: ["tag1", "tag2"]
 ---
 ```
 
-**Responses:** `posts/responses/YYYY-MM-DD-response-slug.md`
+**Responses:** `_src/responses/YYYY-MM-DD-response-slug.md`
 ```yaml
 ---
 type: response
@@ -225,7 +225,7 @@ in_reply_to: "https://example.com/original"
 ---
 ```
 
-**Bookmarks:** `posts/bookmarks/YYYY-MM-DD-bookmark-slug.md`
+**Bookmarks:** `_src/bookmarks/YYYY-MM-DD-bookmark-slug.md`
 ```yaml
 ---
 type: bookmark

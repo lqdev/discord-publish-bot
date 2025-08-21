@@ -370,7 +370,7 @@ caption: "your_caption"
 #### File Organization
 ```
 your-site/
-├── _src/feed/           # Notes and general content
+├── _src/notes/           # Notes and general content
 ├── _src/responses/      # Response posts
 ├── _src/bookmarks/      # Bookmark posts
 └── _src/media/          # Media posts
@@ -378,7 +378,7 @@ your-site/
 
 #### URL Structure
 Your published content typically appears at:
-- **Notes**: `yoursite.com/feed/slug-title`
+- **Notes**: `yoursite.com/notes/slug-title`
 - **Responses**: `yoursite.com/responses/slug-title`
 - **Bookmarks**: `yoursite.com/bookmarks/slug-title`
 - **Media**: `yoursite.com/media/slug-title`

@@ -40,9 +40,9 @@ class PublishingService:
 
     # Content type to source directory mapping
     CONTENT_TYPE_DIRECTORIES = {
-        PostType.NOTE: "_src/feed",
+        PostType.NOTE: "_src/notes",
         PostType.RESPONSE: "_src/responses", 
-        PostType.BOOKMARK: "_src/responses",  # Bookmarks are responses with response_type
+        PostType.BOOKMARK: "_src/bookmarks",
         PostType.MEDIA: "_src/media",
     }
 

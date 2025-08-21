@@ -61,7 +61,7 @@ class TestBasicEndToEnd:
         assert result.success is True
         assert "successfully" in result.message.lower()
         assert result.filename == "2025-08-09-e2e-test-post.md"
-        assert result.filepath == "_src/feed/2025-08-09-e2e-test-post.md"
+        assert result.filepath == "_src/notes/2025-08-09-e2e-test-post.md"
         assert result.commit_sha == "abc123def456"
         assert result.file_url == "https://github.com/test/repo/commit/abc123def456"
         
@@ -70,7 +70,7 @@ class TestBasicEndToEnd:
         call_args = mock_github_client.create_commit.call_args
         
         # Check the arguments passed to GitHub
-        assert call_args.kwargs["filename"] == "_src/feed/2025-08-09-e2e-test-post.md"
+        assert call_args.kwargs["filename"] == "_src/notes/2025-08-09-e2e-test-post.md"
         assert "E2E Test Post" in call_args.kwargs["content"]
         assert "This is an end-to-end integration test post." in call_args.kwargs["content"]
         assert "- e2e" in call_args.kwargs["content"]

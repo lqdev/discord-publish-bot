@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.2.2] - 2025-08-20 - 📁 DIRECTORY STRUCTURE ALIGNMENT
+
+### 🎯 Directory Structure Realignment for Site Organization
+Updated content directory mapping to align with user's existing site structure and content taxonomy, ensuring proper content organization and URL structure.
+
+#### ✅ Directory Mapping Updates (BREAKING CHANGE)
+**Purpose:** Align published content with user's established site directory structure
+- **📝 Notes Directory**: Changed from `_src/feed/` to `_src/notes/` for better content categorization
+- **🔖 Bookmarks Directory**: Changed from `_src/responses/` to `_src/bookmarks/` for proper content separation
+- **📋 Responses Directory**: Remains at `_src/responses/` (unchanged)
+- **📷 Media Directory**: Remains at `_src/media/` (unchanged)
+
+#### 🔧 Technical Implementation
+- **Publishing Service**: Updated `CONTENT_TYPE_DIRECTORIES` mapping for new structure
+- **Environment Configuration**: Updated `CONTENT_BASE_PATH` to reflect notes directory change
+- **Integration Tests**: Updated test expectations for new directory structure
+- **Documentation Sync**: All specs and guides updated to reflect current implementation
+
+#### 📚 Documentation Updates
+- **ADR-012**: [Directory Structure Alignment](docs/adr/adr-012-directory-structure-alignment.md)
+- **User Guide**: Updated file organization and URL structure examples
+- **API Documentation**: Updated storage folder references and example responses
+- **Technical Specifications**: Updated repository structure diagrams
+
+#### 🚀 Migration Impact
+- **New Content**: Will be published to updated directories immediately
+- **Existing Content**: Remains in current locations (no automatic migration)
+- **Site Integration**: URLs and navigation will align with expected directory structure
+- **Backward Compatibility**: All existing functionality preserved
+
+---
+
 ## [2.1.0] - 2025-08-12 - 📚 COMPREHENSIVE DOCUMENTATION SUITE COMPLETE
 
 ### 🎯 AUTONOMOUS FRAMEWORK SUCCESS: Complete User & Developer Documentation

@@ -1,7 +1,9 @@
 # Discord Publishing API Documentation
 
 ## API Information
-**API Name:** Discord Publishing API  
+**API Name:** Discord Publish  "filepath": "_src/notes/2025-08-08-my-first-note.md",
+  "commit_sha": "abc123def456",
+  "site_url": "https://yoursite.com/notes/my-first-note" API  
 **Version:** 1.0.0  
 **Base URL:** `https://discord-publish-api.fly.dev`  
 **Last Updated:** 2025-08-08  
@@ -264,9 +266,9 @@ curl -X POST "https://discord-publish-api.fly.dev/publish" \
 ```json
 {
   "status": "success",
-  "filepath": "posts/notes/2025-08-08-development-update.md",
+  "filepath": "_src/notes/2025-08-08-development-update.md",
   "commit_sha": "a1b2c3d4e5f6789012345678901234567890abcd",
-  "site_url": "https://yoursite.com/posts/notes/development-update"
+  "site_url": "https://yoursite.com/notes/development-update"
 }
 ```
 
@@ -282,7 +284,7 @@ curl -X POST "https://discord-publish-api.fly.dev/publish" \
 
 #### Note Posts
 **Command:** `/post note`  
-**Storage Folder:** `posts/notes/`  
+**Storage Folder:** `_src/notes/`  
 **Description:** General purpose notes and thoughts
 
 **Message Format:**
@@ -342,7 +344,7 @@ in_reply_to: "https://example.com/original-post"
 
 #### Bookmark Posts
 **Command:** `/post bookmark`  
-**Storage Folder:** `posts/bookmarks/`  
+**Storage Folder:** `_src/bookmarks/`  
 **Description:** Saved links with optional notes
 
 **Message Format:**

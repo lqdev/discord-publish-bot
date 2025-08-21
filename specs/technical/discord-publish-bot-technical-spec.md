@@ -585,7 +585,7 @@ LOG_LEVEL=INFO
 
 ### File Structure in Repository
 ```
-posts/
+_src/
 ├── notes/
 │   ├── 2025-08-08-my-first-note.md
 │   ├── 2025-08-08-development-thoughts.md
