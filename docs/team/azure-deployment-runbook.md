@@ -157,6 +157,39 @@ az containerapp revision list \
 
 ## 📚 Deployment Lessons Learned
 
+### Timezone Consistency Fix Deployment (2025-08-21)
+**Issue**: Timezone inconsistency in frontmatter date fields across different content types
+**Solution**: Updated PublishingService._generate_frontmatter() to use consistent -05:00 timezone format
+**Deployment**: Successful production deployment with timezone fix (version 2.2.3)
+
+#### Key Learnings
+1. **Docker Build Resilience**: Initial network timeout during Docker layer pull resolved with simple retry
+   - First attempt failed with "net/http: request canceled while waiting for connection"
+   - Second attempt completed successfully without any configuration changes
+   - Azure Container Registry build process handles transient network issues with retry strategy
+
+2. **Environment Variable Restoration**: Critical step 2.2 successfully restores production configuration
+   - `az containerapp up` resets environment variables as documented
+   - Secret references properly restored with update command
+   - All 9 required secrets maintained proper mapping to environment variables
+
+3. **Health Verification Process**:
+   - Health endpoint confirmed all services operational immediately after deployment
+   - Version verification showed successful update to 2.2.3
+   - Discord and GitHub integrations maintained full functionality
+
+4. **Production Deployment Pattern Validation**:
+   - Change identification → Local fix → Production deployment → Health verification
+   - Total deployment time: ~45 minutes including initial timeout retry
+   - Zero downtime deployment achieved with Container Apps revision model
+   - Revision ca-discord-publish-bot--0000046 successfully activated
+
+#### Enhanced Deployment Best Practices
+- **Retry Strategy**: Network timeouts during Docker build are transient; simple retry resolves issue
+- **Environment Configuration**: Always execute step 2.2 immediately after `az containerapp up`
+- **Health Monitoring**: Verify both health endpoint and functional integration post-deployment
+- **Documentation Integration**: Update changelog with deployment details for operational tracking
+
 ### Critical Modal Routing & Response Type Enhancement (2025-08-10)
 **Issue**: Discord commands showed wrong modals for different post types; users limited to "reply" responses only
 **Solution**: Modal parsing fix + response type selection implementation with correct frontmatter values

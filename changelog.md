@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.2.3] - 2025-08-21 - 🕐 TIMEZONE CONSISTENCY FIX
+
+### 🔧 Frontmatter Timezone Consistency
+Fixed timezone inconsistency in response/bookmark frontmatter date fields to ensure all content types use the same `-05:00` Eastern timezone format.
+
+#### ✅ Fixed
+- **Timezone Consistency**: Response `dt_published` field now consistently includes `-05:00` timezone offset
+- **Documentation Update**: Updated docstring to reflect "consistently" using `-05:00` timezone
+- **Quality Assurance**: All content types now use identical timezone format in frontmatter
+
+#### 🎯 Technical Details
+**Issue**: Response/bookmark posts had inconsistent timezone usage:
+- `dt_published`: Missing timezone offset (`"2025-08-21 14:30"`)
+- `dt_updated`: Had timezone offset (`"2025-08-21 14:30 -05:00"`)
+
+**Resolution**: Both fields now consistently use the `-05:00` Eastern timezone format as required by the site schema.
+
+**Impact**: Ensures uniform date formatting across all content types (Notes, Responses, Bookmarks, Media).
+
+#### 🚀 Production Deployment
+- **Deployment Time**: 2025-08-21 23:17 UTC
+- **Revision**: ca-discord-publish-bot--0000046  
+- **Health Status**: ✅ All services operational
+- **Environment Config**: ✅ Secret references properly configured
+- **Build Status**: ✅ Docker build successful after initial timeout retry
+
+---
+
 ## [2.2.2] - 2025-08-20 - 📁 DIRECTORY STRUCTURE ALIGNMENT
 
 ### 🎯 Directory Structure Realignment for Site Organization

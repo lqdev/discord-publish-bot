@@ -374,7 +374,7 @@ class PublishingService:
         - Notes: post_type, title, published_date, tags array
         - Responses/Bookmarks: title, targeturl, response_type, dt_published, dt_updated, tags array  
         - Media: post_type, title, published_date, tags array
-        - All dates use -05:00 timezone
+        - All dates use -05:00 timezone consistently
         - Tags are always arrays of strings ["tag1", "tag2"]
         
         Args:
@@ -419,7 +419,7 @@ class PublishingService:
                 frontmatter.update({
                     "targeturl": post_data.target_url,
                     "response_type": response_type,
-                    "dt_published": base_date,
+                    "dt_published": date_with_tz,
                     "dt_updated": date_with_tz,
                 })
             
