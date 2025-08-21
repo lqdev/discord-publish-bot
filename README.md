@@ -1,12 +1,6 @@
-# Discord Publish Bot ✅ PRODUCTION READY + ATTACHMENT SUPPORT COMPLETE
+# Discord Publish Bot
 
-**Status**: 🎉 **PRODUCTION DEPLOYMENT COMPLETE WITH FULL ATTACHMENT SUPPORT**  
-**Latest**: Discord attachment functionality breakthrough (v2.0.3) - **"It worked!!!!"**  
-**URL**: `https://<app-name>.<region>.azurecontainerapps.io`  
-**Health**: ✅ HEALTHY (Azure Container Apps revision 0000029)  
-**User Validation**: Complete attachment workflow confirmed working
-
-A production-ready Discord bot that automatically publishes Discord posts to GitHub repositories as formatted markdown files, enabling seamless content publishing to static sites. Now deployed and operational on Azure Container Apps with scale-to-zero cost optimization **plus complete Discord attachment support**.
+A production-ready Discord bot that automatically publishes Discord posts to GitHub repositories as formatted markdown files, enabling seamless content publishing to static sites. Features complete Discord attachment support and is designed for deployment on Azure Container Apps with scale-to-zero cost optimization.
 
 ## 🚀 Quick Start
 
@@ -20,11 +14,11 @@ A production-ready Discord bot that automatically publishes Discord posts to Git
 👉 **[Complete User Guide](docs/team/user-guide.md)** for all commands and workflows
 
 ### For Developers (Contributing)
-1. **Clone repository**: `git clone <repository-url>`
+1. **Clone repository**: `git clone https://github.com/your-username/discord-publish-bot.git`
 2. **Run setup**: `python setup.py` (installs UV + dependencies)
 3. **Configure credentials**: Follow [credential setup guide](docs/team/credential-setup-guide.md)
 4. **Start development**: `uv run discord-bot` and `uv run publishing-api`
-5. **Run tests**: `uv run pytest tests/unit/ -v` (should see 46/46 passing)
+5. **Run tests**: `uv run pytest tests/unit/ -v`
 
 👉 **[Complete Developer Onboarding](docs/team/onboarding-guide.md)** for full setup and contribution guide
 
@@ -37,14 +31,14 @@ A production-ready Discord bot that automatically publishes Discord posts to Git
 - **Perfect Format Compliance**: Custom frontmatter + automatic `:::media` block generation
 - **Modal Interfaces**: User-friendly forms with automatic attachment data pre-filling
 
-### ✅ Media Block Generation (BREAKTHROUGH)
+### ✅ Media Block Generation
 - **Automatic Processing**: Discord attachments → `:::media` blocks with complete metadata
 - **Media Syntax**: Proper url, alt, mediaType, aspectRatio, caption fields
 - **Seamless Workflow**: Upload attachment → pre-filled modal → GitHub PR with media
-- **Production Ready**: Full attachment functionality operational in Azure Container Apps
+- **Production Ready**: Full attachment functionality for content creation
 
 ### ✅ Azure Container Apps Deployment
-- **Production URL**: `https://<app-name>.<region>.azurecontainerapps.io`
+- **Cloud-Ready**: Designed for Azure Container Apps deployment
 - **Scale-to-Zero**: Cost optimization with automatic scaling
 - **Security**: Comprehensive secret management and authentication
 - **Monitoring**: Health checks and performance tracking
@@ -69,7 +63,7 @@ Use these commands in any Discord server where the bot is installed:
 /post media [attachment]     # Upload file and publish with automatic media blocks
 ```
 
-### Attachment Functionality (NEW - WORKING)
+### Attachment Functionality
 - **File Upload**: Attach any media file to `/post media` command
 - **Automatic Processing**: Attachment URL and metadata pre-fill in modal
 - **Media Block Generation**: Automatic `:::media` syntax creation
@@ -78,7 +72,7 @@ Use these commands in any Discord server where the bot is installed:
 ### Health Monitoring
 - **Health Check**: `https://<app-name>.<region>.azurecontainerapps.io/health`
 - **Status**: Returns system health, version, and configuration status
-- **Performance**: <2 second response times validated (including attachments)
+- **Performance**: Optimized for fast response times
 
 ## 🛠️ Development Setup (For Contributors)
 
@@ -94,7 +88,7 @@ Use these commands in any Discord server where the bot is installed:
 1. **One-Command Setup**
    ```bash
    # Clone the repository
-   git clone <repository-url>
+   git clone https://github.com/your-username/discord-publish-bot.git
    cd discord-publish-bot
    
    # Run automated setup
@@ -117,11 +111,9 @@ Use these commands in any Discord server where the bot is installed:
 
 ### Manual Setup
 
-### Development Setup
-
 1. **Clone and Setup Environment**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/your-username/discord-publish-bot.git
    cd discord-publish-bot
    
    # Install UV if not already installed
@@ -174,11 +166,10 @@ uv run publishing-api
 
 # Start Discord Bot (in separate terminal)
 uv run discord-bot
-uv run discord-bot
 ```
 
 #### Production Deployment
-See [Deployment Guide](docs/deployment.md) for production setup instructions.
+See deployment documentation for production setup instructions.
 
 ## Project Structure
 
@@ -229,9 +220,7 @@ discord-publish-bot/
 - **[Architecture Decision Records](docs/adr/)** - Key architectural decisions and rationale
 
 ### 📋 Project Management
-- **[Project Backlog](backlog.md)** - Sprint planning and feature roadmap
 - **[Changelog](changelog.md)** - Detailed development progress and releases
-- **[Roadmap](roadmap.md)** - Project completion summary and achievements
 
 ## Development
 
@@ -254,9 +243,7 @@ uv run discord-bot                 # Start bot
 ```
 
 ### Project Management
-This project follows sprint-based development with comprehensive documentation. See:
-- [Project Backlog](backlog.md) for current sprint status
-- [Changelog](changelog.md) for detailed progress tracking
+This project follows systematic development with comprehensive documentation. See the [Changelog](changelog.md) for development progress tracking.
 
 ## Security
 
@@ -290,18 +277,12 @@ For complete security guidelines, see [Security Documentation](docs/team/securit
 
 ## Project Status & Testing
 
-### Current Status: Phase 2 Ready - Azure Deployment ✅
-**Latest Achievement:** Test Infrastructure Stabilization Complete (v2.3.1)
-- ✅ **100% Unit Test Success**: 46/46 tests passing
-- ✅ **Production Container**: 224MB optimized Docker image validated
-- ✅ **System Health**: All core functionality verified for deployment
-
 ### Test Suite Validation
 ```bash
-# Run unit tests (should show 46/46 passing)
+# Run unit tests
 uv run pytest tests/unit/ -v
 
-# Run all tests (core functionality)
+# Run all tests
 uv run pytest tests/unit/ tests/test_security_isolation.py
 
 # Validate Docker build
@@ -312,8 +293,8 @@ docker build -t discord-publish-bot:test .
 
 1. Follow the established documentation templates in `templates/`
 2. Update appropriate documentation when making changes
-3. Ensure tests pass and coverage remains above 80%
-4. Follow sprint planning methodology outlined in backlog
+3. Ensure tests pass and maintain good coverage
+4. Follow the contribution guidelines
 
 ## License
 
@@ -324,10 +305,8 @@ docker build -t discord-publish-bot:test .
 For technical issues and questions:
 - Review [Technical Specification](specs/technical/discord-publish-bot-technical-spec.md)
 - Check [API Documentation](specs/api/discord-publishing-api.md)
-- Consult [Project Backlog](backlog.md) for known issues
+- Open an issue on GitHub for bug reports or feature requests
 
 ---
 
-**Project Status:** Production-Ready Container with 100% Unit Test Success ✅  
-**Last Updated:** 2025-08-09  
-**Next Milestone:** Azure Container Apps Deployment (Phase 2)
+**Project Status:** Production-Ready with Full Discord Integration ✅
