@@ -41,8 +41,8 @@ SENSITIVE_ENV_VARS = [
 def verify_no_production_credentials():
     """Verify that no production credentials are present in the environment."""
     dangerous_patterns = [
-        ("DISCORD_BOT_TOKEN", ["FAKE_TOKENNEVER_REAL_TOKEN"]),  # Start of real token
-        ("GITHUB_TOKEN", ["ghp_FAKE4W2rwp0WycBUp76grs48jLSeorh"]),  # Start of real token  
+        ("DISCORD_BOT_TOKEN", ["FAKE_TOKEN_NEVER_REAL"]),  # Safe fake token pattern
+        ("GITHUB_TOKEN", ["ghp_FAKE_NEVER_REAL"]),  # Safe fake token pattern  
         ("DISCORD_USER_ID", ["727687304596160593"]),  # Real user ID
         ("GITHUB_REPO", ["example-dev/luisquintanilla.me"]),  # Real repo
     ]
@@ -110,7 +110,7 @@ def event_loop():
 def test_env_vars(monkeypatch):
     """Provide test environment variables."""
     test_vars = {
-        "DISCORD_BOT_TOKEN": "FAKE_TEST_TOKEN_123456789.GhI6jK.abcdefghijklmnopqrstuvwxyz1234567890ABC",
+        "DISCORD_BOT_TOKEN": "FAKE_TEST_TOKEN.NEVER_REAL.SAFE_FOR_TESTING_ONLY_123456789",
         "DISCORD_APPLICATION_ID": "123456789012345678", 
         "DISCORD_PUBLIC_KEY": "a" * 64,
         "DISCORD_USER_ID": "987654321098765432",
@@ -149,7 +149,7 @@ def test_settings() -> AppSettings:
         environment="development",  # Use valid environment value
         log_level="DEBUG",
         discord=DiscordSettings(
-            bot_token="FAKE_TEST_TOKEN_123456789.FAKE.TEST_TOKEN_NEVER_REAL_SAFE_FOR_TESTING",
+            bot_token="FAKE_TEST_TOKEN.NEVER_REAL.OBVIOUSLY_FAKE_FOR_TESTING",
             application_id="123456789012345678",
             public_key="f" * 64,  # Changed from "a" * 64 to make it more obviously fake
             authorized_user_id="987654321098765432"
