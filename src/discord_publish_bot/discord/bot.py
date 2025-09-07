@@ -290,7 +290,7 @@ class MediaModal(BasePostModal):
         self.attachment_content_type = attachment_content_type
         self.command_alt_text = alt_text  # Alt text from command parameter
         
-        # Always add core fields (3 fields)
+        # Always add core fields (4 fields: Title, Content, Media URL, Custom Slug)
         self.title_input = discord.ui.TextInput(
             label="Title",
             placeholder="Enter post title...",
@@ -308,7 +308,7 @@ class MediaModal(BasePostModal):
         )
         self.add_item(self.content_input)
         
-        # Media URL field (4th field)
+        # Media URL field (3rd field)
         if attachment_url:
             self.media_url_input = discord.ui.TextInput(
                 label="Media URL",
@@ -326,30 +326,19 @@ class MediaModal(BasePostModal):
             )
         self.add_item(self.media_url_input)
         
-        # Smart field allocation for remaining field (5th field)
-        if alt_text:
-            # Alt text provided via command - use 5th field for slug
-            self.slug_input = discord.ui.TextInput(
-                label="Custom Slug (optional)",
-                placeholder="Leave blank to auto-generate from title",
-                max_length=80,
-                required=False
-            )
-            self.add_item(self.slug_input)
-            self.alt_text_input = None
-            self.tags_input = None  # Skip tags to stay within 5-field limit
-        else:
-            # No alt text from command - use 5th field for alt text (accessibility priority)
-            self.alt_text_input = discord.ui.TextInput(
-                label="Alt Text (for accessibility)",
-                placeholder="Describe the image for screen readers...",
-                max_length=200,
-                required=False,
-                style=discord.TextStyle.paragraph
-            )
-            self.add_item(self.alt_text_input)
-            self.slug_input = None  # Skip slug to stay within 5-field limit
-            self.tags_input = None  # Skip tags to stay within 5-field limit
+        # Always include slug field (4th field) - no more conditional logic
+        self.slug_input = discord.ui.TextInput(
+            label="Custom Slug (optional)",
+            placeholder="Leave blank to auto-generate from title",
+            max_length=80,
+            required=False
+        )
+        self.add_item(self.slug_input)
+        
+        # No alt_text_input field - alt text only via command parameter
+        # No tags_input field - omitted due to Discord's 5-field limit
+        self.alt_text_input = None
+        self.tags_input = None
     
     async def _add_type_specific_data(self, post_data: PostData):
         """Add media-specific data to post with validation."""
@@ -361,15 +350,12 @@ class MediaModal(BasePostModal):
         
         post_data.media_url = media_url.strip()
         
-        # Add alt text - prioritize command parameter, then modal input
+        # Add alt text only if provided via command parameter
         if self.command_alt_text:
-            # Alt text provided via command parameter
             post_data.media_alt = self.command_alt_text.strip()
-        elif self.alt_text_input and self.alt_text_input.value:
-            # Alt text provided via modal field
-            post_data.media_alt = self.alt_text_input.value.strip()
+        # No fallback to modal alt text - simplified approach
         
-        # Add slug if available (only when alt_text provided via command)
+        # Add slug if available from modal input
         if self.slug_input and self.slug_input.value:
             post_data.slug = self.slug_input.value.strip()
     

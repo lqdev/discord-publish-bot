@@ -191,10 +191,11 @@ class DiscordInteractionsHandler:
     async def _handle_post_command(self, interaction: Dict[str, Any]) -> Dict[str, Any]:
         """Handle post slash command - show modal for post creation."""
         try:
-            # Get post type, response type, and attachment from command options
+            # Get post type, response type, attachment, and alt_text from command options
             post_type = PostType.NOTE  # Default
             response_type = "reply"    # Default
             attachment = None          # Attachment data
+            alt_text = None           # Alt text parameter
             
             if "options" in interaction["data"]:
                 for option in interaction["data"]["options"]:
@@ -205,6 +206,9 @@ class DiscordInteractionsHandler:
                             logger.warning(f"Invalid post type: {option['value']}")
                     elif option["name"] == "response_type":
                         response_type = option["value"]
+                    elif option["name"] == "alt_text":
+                        alt_text = option.get("value", "").strip()
+                        logger.info(f"Alt text parameter received: {alt_text}")
                     elif option["name"] == "attachment":
                         attachment_id = option.get("value")  # Discord sends attachment ID in value
                         logger.info(f"Attachment ID received: {attachment_id}")
@@ -251,7 +255,7 @@ class DiscordInteractionsHandler:
                 # This keeps the modal response fast and within Discord's 3-second timeout
                 logger.info(f"Media attachment detected: {attachment.get('filename')}, will upload to Azure during PR creation")
             
-            modal = self._create_post_modal(post_type, response_type, attachment_data=attachment)
+            modal = self._create_post_modal(post_type, response_type, attachment_data=attachment, alt_text=alt_text)
             
             return {
                 "type": InteractionResponseType.MODAL,
@@ -262,13 +266,16 @@ class DiscordInteractionsHandler:
             logger.error(f"Error handling post command: {e}")
             raise DiscordCommandError(f"Failed to handle post command: {e}")
     
-    def _create_post_modal(self, post_type: PostType, response_type: str = "reply", attachment_data=None) -> Dict[str, Any]:
+    def _create_post_modal(self, post_type: PostType, response_type: str = "reply", attachment_data=None, alt_text=None) -> Dict[str, Any]:
         """Create modal for post creation based on type."""
         # Include response_type in custom_id for response posts
         if post_type == PostType.RESPONSE:
             custom_id = f"post_modal_{post_type.value}_{response_type}"
         else:
             custom_id = f"post_modal_{post_type.value}"
+            
+        # Note: alt_text parameter handling is primarily supported in WebSocket bot
+        # HTTP interactions have limitations for passing command parameters through modals
             
         modal = {
             "custom_id": custom_id,
@@ -312,6 +319,18 @@ class DiscordInteractionsHandler:
                     "placeholder": "tag1, tag2, tag3",
                     "required": False,
                     "max_length": 200
+                }]
+            },
+            {
+                "type": ComponentType.ACTION_ROW,
+                "components": [{
+                    "type": ComponentType.TEXT_INPUT,
+                    "custom_id": "slug",
+                    "label": "Custom Slug (optional)",
+                    "style": 1,  # Short
+                    "placeholder": "Leave blank to auto-generate from title",
+                    "required": False,
+                    "max_length": 80
                 }]
             }
         ]
@@ -379,19 +398,8 @@ class DiscordInteractionsHandler:
                     }]
                 })
             
-            # Add alt text field for accessibility
-            components.append({
-                "type": ComponentType.ACTION_ROW,
-                "components": [{
-                    "type": ComponentType.TEXT_INPUT,
-                    "custom_id": "alt_text",
-                    "label": "Alt Text (for accessibility)",
-                    "style": 2,  # Paragraph
-                    "placeholder": "Describe the image for screen readers...",
-                    "required": False,
-                    "max_length": 200
-                }]
-            })
+            # Note: Alt text is now handled via command parameter only (Phase 2 simplification)
+            # Modal consistently shows: Title, Content, Tags, Custom Slug, Media URL (5 fields)
         
         modal["components"] = components
         return modal
@@ -485,10 +493,11 @@ class DiscordInteractionsHandler:
                 content=form_data.get("content", "").strip(),
                 post_type=post_type,
                 tags=parse_tags(form_data.get("tags", "")),
+                slug=form_data.get("slug", "").strip() or None,  # Custom slug field from modal
                 target_url=form_data.get("target_url", "").strip() or None,
                 response_type=response_type,
                 media_url=form_data.get("media_url", "").strip() or None,
-                media_alt=form_data.get("alt_text", "").strip() or None,
+                media_alt=None,  # Alt text via command parameter not supported in HTTP interactions yet
                 created_by=user_id
             )
             

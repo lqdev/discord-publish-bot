@@ -50,13 +50,13 @@ class TestModalIntegration:
         # Get MediaModal.__init__ source code
         source = inspect.getsource(MediaModal.__init__)
         
-        # Check for conditional field allocation logic
+        # Check for simplified field allocation logic
         assert 'command_alt_text' in source, "MediaModal should handle command_alt_text parameter"
         assert 'slug_input' in source, "MediaModal should have slug_input field logic"
-        assert 'alt_text_input' in source, "MediaModal should have alt_text_input field logic"
         
-        # Check for intelligent field allocation
-        assert 'if self.command_alt_text' in source or 'if alt_text' in source, "MediaModal should have conditional field allocation"
+        # Check that complex conditional logic has been removed
+        assert 'if alt_text:' not in source, "MediaModal should not have conditional field allocation"
+        assert 'Smart field allocation' not in source, "MediaModal should not have smart field allocation comments"
 
 
 class TestPostDataIntegration:
