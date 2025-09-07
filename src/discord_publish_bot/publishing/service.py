@@ -130,7 +130,7 @@ class PublishingService:
             content = self._build_markdown_content(frontmatter, post_data.content, post_data)
             
             # Generate filename and path
-            filename = generate_filename(post_data.post_type, post_data.title)
+            filename = generate_filename(post_data.post_type, post_data.title, post_data.slug)
             directory = self.CONTENT_TYPE_DIRECTORIES[post_data.post_type]
             filepath = f"{directory}/{filename}"
             

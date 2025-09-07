@@ -77,6 +77,12 @@ def create_command_definitions() -> List[Dict[str, Any]]:
                     "description": "Upload an image file (for media posts)",
                     "type": 11,  # ATTACHMENT
                     "required": False
+                },
+                {
+                    "name": "alt_text",
+                    "description": "Alt text for accessibility (media posts)",
+                    "type": 3,  # STRING
+                    "required": False
                 }
             ]
         }

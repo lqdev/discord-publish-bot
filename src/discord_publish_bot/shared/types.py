@@ -57,6 +57,7 @@ class PostData(BaseModel):
     content: str = Field(..., description="Post content/body")
     post_type: PostType = Field(..., description="Type of post")
     tags: Optional[list[str]] = Field(None, description="Post tags")
+    slug: Optional[str] = Field(None, description="Custom URL slug override")
     
     # Type-specific fields
     target_url: Optional[str] = Field(None, description="URL for responses and bookmarks")
