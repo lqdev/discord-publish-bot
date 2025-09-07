@@ -170,6 +170,15 @@ class BasePostModal(discord.ui.Modal):
             required=False
         )
         self.add_item(self.tags_input)
+        
+        # Add slug field for URL customization (available to all modal types)
+        self.slug_input = discord.ui.TextInput(
+            label="Custom Slug (optional)",
+            placeholder="Leave blank to auto-generate from title",
+            max_length=80,
+            required=False
+        )
+        self.add_item(self.slug_input)
     
     async def on_submit(self, interaction: discord.Interaction):
         """Handle modal submission."""
@@ -182,6 +191,7 @@ class BasePostModal(discord.ui.Modal):
                 content=self.content_input.value.strip(),
                 post_type=self.post_type,
                 tags=tags,
+                slug=self.slug_input.value.strip() if self.slug_input.value else None,
                 created_by=str(interaction.user.id)
             )
             
@@ -269,7 +279,10 @@ class MediaModal(BasePostModal):
     """Modal for creating media posts with optional file attachment support."""
     
     def __init__(self, bot: DiscordBot, attachment_url=None, attachment_filename=None, attachment_content_type=None, alt_text=None):
-        super().__init__(bot, PostType.MEDIA)
+        # Don't call super().__init__() yet - we need to customize field allocation
+        discord.ui.Modal.__init__(self, title=f"Create Media Post")
+        self.bot = bot
+        self.post_type = PostType.MEDIA
         
         # Store attachment information and alt text
         self.attachment_url = attachment_url
@@ -277,9 +290,26 @@ class MediaModal(BasePostModal):
         self.attachment_content_type = attachment_content_type
         self.command_alt_text = alt_text  # Alt text from command parameter
         
-        # Configure media URL input based on attachment
+        # Always add core fields (3 fields)
+        self.title_input = discord.ui.TextInput(
+            label="Title",
+            placeholder="Enter post title...",
+            max_length=200,
+            required=True
+        )
+        self.add_item(self.title_input)
+        
+        self.content_input = discord.ui.TextInput(
+            label="Content",
+            placeholder="Enter post content...",
+            style=discord.TextStyle.paragraph,
+            max_length=4000,
+            required=True
+        )
+        self.add_item(self.content_input)
+        
+        # Media URL field (4th field)
         if attachment_url:
-            # Pre-fill with uploaded file URL
             self.media_url_input = discord.ui.TextInput(
                 label="Media URL",
                 placeholder=f"Using uploaded file: {attachment_filename or 'file'}",
@@ -288,18 +318,28 @@ class MediaModal(BasePostModal):
                 required=False
             )
         else:
-            # Standard URL input
             self.media_url_input = discord.ui.TextInput(
                 label="Media URL",
                 placeholder="https://example.com/image.jpg",
                 max_length=500,
                 required=False
             )
-        
         self.add_item(self.media_url_input)
         
-        # Add alt text input for accessibility (if not provided in command)
-        if not alt_text:
+        # Smart field allocation for remaining field (5th field)
+        if alt_text:
+            # Alt text provided via command - use 5th field for slug
+            self.slug_input = discord.ui.TextInput(
+                label="Custom Slug (optional)",
+                placeholder="Leave blank to auto-generate from title",
+                max_length=80,
+                required=False
+            )
+            self.add_item(self.slug_input)
+            self.alt_text_input = None
+            self.tags_input = None  # Skip tags to stay within 5-field limit
+        else:
+            # No alt text from command - use 5th field for alt text (accessibility priority)
             self.alt_text_input = discord.ui.TextInput(
                 label="Alt Text (for accessibility)",
                 placeholder="Describe the image for screen readers...",
@@ -308,9 +348,8 @@ class MediaModal(BasePostModal):
                 style=discord.TextStyle.paragraph
             )
             self.add_item(self.alt_text_input)
-        else:
-            # Alt text provided via command parameter, no need for modal field
-            self.alt_text_input = None
+            self.slug_input = None  # Skip slug to stay within 5-field limit
+            self.tags_input = None  # Skip tags to stay within 5-field limit
     
     async def _add_type_specific_data(self, post_data: PostData):
         """Add media-specific data to post with validation."""
@@ -329,6 +368,43 @@ class MediaModal(BasePostModal):
         elif self.alt_text_input and self.alt_text_input.value:
             # Alt text provided via modal field
             post_data.media_alt = self.alt_text_input.value.strip()
+        
+        # Add slug if available (only when alt_text provided via command)
+        if self.slug_input and self.slug_input.value:
+            post_data.slug = self.slug_input.value.strip()
+    
+    async def on_submit(self, interaction: discord.Interaction):
+        """Handle modal submission for media posts with custom field handling."""
+        try:
+            # Build post data with available fields
+            post_data = PostData(
+                title=self.title_input.value.strip(),
+                content=self.content_input.value.strip(),
+                post_type=self.post_type,
+                tags=None,  # MediaModal doesn't include tags due to field limit
+                slug=self.slug_input.value.strip() if self.slug_input and self.slug_input.value else None,
+                created_by=str(interaction.user.id)
+            )
+            
+            # Add type-specific data
+            await self._add_type_specific_data(post_data)
+            
+            # Defer response
+            await interaction.response.defer(ephemeral=True)
+            
+            # Handle post creation
+            result = await self.bot.handle_post_creation(post_data)
+            
+            # Send followup
+            await interaction.followup.send(result, ephemeral=True)
+            
+        except Exception as e:
+            logger.error(f"Error in media modal submission: {e}")
+            if not interaction.response.is_done():
+                await interaction.response.send_message(
+                    f"❌ Error creating post: {str(e)}", 
+                    ephemeral=True
+                )
 
 
 # Global commands
