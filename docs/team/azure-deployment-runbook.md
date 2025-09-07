@@ -7,6 +7,28 @@
 - Docker installed (for local testing)
 - Azure subscription with Container Apps enabled
 
+### 0. Resource Discovery (Required Before Deployment)
+
+#### 0.1 Discover Resource Groups
+```bash
+# Find resource groups for the current project
+az group list --query "[].{Name:name,Location:location}" --output table
+```
+
+#### 0.2 Discover Container Apps
+```bash
+# List all container apps in discovered resource group
+az containerapp list --resource-group <discovered-resource-group> --query "[].{Name:name,Status:properties.provisioningState,FQDN:properties.configuration.ingress.fqdn}" --output table
+```
+
+#### 0.3 Verify Current Status
+```bash
+# Check current container app status
+az containerapp show --name <discovered-container-app> --resource-group <discovered-resource-group> --query "{name:name,status:properties.provisioningState,fqdn:properties.configuration.ingress.fqdn,activeRevisions:properties.latestRevisionName}" --output table
+```
+
+**Use discovered values in all subsequent commands below**
+
 ### 1. Initial Setup (One Time)
 
 #### 1.1 Create Resource Group
@@ -26,9 +48,10 @@ az containerapp env create \
 
 #### 2.1 Deploy Container App
 ```bash
+# Use values discovered in step 0
 az containerapp up \
-  --name <your-container-app-name> \
-  --resource-group <your-resource-group> \
+  --name <discovered-container-app-name> \
+  --resource-group <discovered-resource-group> \
   --source . \
   --env-vars ENVIRONMENT=production
 ```
@@ -37,9 +60,10 @@ az containerapp up \
 **Note**: `az containerapp up` resets environment configuration. Always run this after deployment:
 
 ```bash
+# Use discovered values from step 0
 az containerapp update \
-  --name <your-container-app-name> \
-  --resource-group <your-resource-group> \
+  --name <discovered-container-app-name> \
+  --resource-group <discovered-resource-group> \
   --set-env-vars \
     ENVIRONMENT=production \
     AZURE_STORAGE_USE_RELATIVE_PATHS=true \
@@ -60,9 +84,10 @@ az containerapp update \
 
 #### 3.1 Run Secrets Setup Script
 ```bash
+# Use discovered values from step 0
 ./scripts/azure-secrets-setup.ps1 \
-  -ResourceGroupName <your-resource-group> \
-  -ContainerAppName <your-container-app-name> \
+  -ResourceGroupName <discovered-resource-group> \
+  -ContainerAppName <discovered-container-app-name> \
   -EnvFile .env.production
 ```
 

@@ -1,6 +1,6 @@
 [project]
 name = "discord-publish-bot"
-version = "2.2.2"
+version = "2.3.0"
 description = "Discord bot that publishes posts to GitHub repositories as formatted markdown files"
 authors = [
     {name = "Discord Publish Bot Team"}
