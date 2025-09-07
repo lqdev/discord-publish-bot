@@ -58,8 +58,8 @@ def slugify(text: str, max_length: int = 100) -> str:
     text = re.sub(r'[^\w\s-]', '', text).strip().lower()
     text = re.sub(r'[-\s]+', '-', text)
     
-    # Truncate to max length and remove trailing hyphens
-    text = text[:max_length].rstrip('-')
+    # Truncate to max length and remove leading/trailing hyphens
+    text = text[:max_length].strip('-')
     
     return text
 
@@ -67,23 +67,32 @@ def slugify(text: str, max_length: int = 100) -> str:
 def generate_filename(
     post_type: PostType, 
     title: str, 
+    slug: Optional[str] = None,
     timestamp: Optional[datetime] = None
 ) -> str:
     """
-    Generate filename for post based on type and title.
+    Generate filename for post based on type and title with optional custom slug.
     
     Args:
         post_type: Type of post
         title: Post title
+        slug: Optional custom slug (takes priority over auto-generated)
         timestamp: Optional timestamp (not used, kept for compatibility)
         
     Returns:
         Generated filename with .md extension (no date prefix)
     """
-    # Format: title-slug.md (no date prefix)
-    title_slug = slugify(title, max_length=80)
+    if slug and slug.strip():
+        # Use custom slug if provided, sanitize it
+        filename_slug = slugify(slug.strip(), max_length=80)
+        # If slug becomes empty after sanitization, fall back to title
+        if not filename_slug:
+            filename_slug = slugify(title, max_length=80)
+    else:
+        # Fall back to title-based generation
+        filename_slug = slugify(title, max_length=80)
     
-    return f"{title_slug}.md"
+    return f"{filename_slug}.md"
 
 
 def validate_url(url: str) -> bool:

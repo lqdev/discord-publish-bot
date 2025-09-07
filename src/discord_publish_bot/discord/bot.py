@@ -268,13 +268,14 @@ class BookmarkModal(BasePostModal):
 class MediaModal(BasePostModal):
     """Modal for creating media posts with optional file attachment support."""
     
-    def __init__(self, bot: DiscordBot, attachment_url=None, attachment_filename=None, attachment_content_type=None):
+    def __init__(self, bot: DiscordBot, attachment_url=None, attachment_filename=None, attachment_content_type=None, alt_text=None):
         super().__init__(bot, PostType.MEDIA)
         
-        # Store attachment information
+        # Store attachment information and alt text
         self.attachment_url = attachment_url
         self.attachment_filename = attachment_filename
         self.attachment_content_type = attachment_content_type
+        self.command_alt_text = alt_text  # Alt text from command parameter
         
         # Configure media URL input based on attachment
         if attachment_url:
@@ -297,15 +298,19 @@ class MediaModal(BasePostModal):
         
         self.add_item(self.media_url_input)
         
-        # Add alt text input for accessibility
-        self.alt_text_input = discord.ui.TextInput(
-            label="Alt Text (for accessibility)",
-            placeholder="Describe the image for screen readers...",
-            max_length=200,
-            required=False,
-            style=discord.TextStyle.paragraph
-        )
-        self.add_item(self.alt_text_input)
+        # Add alt text input for accessibility (if not provided in command)
+        if not alt_text:
+            self.alt_text_input = discord.ui.TextInput(
+                label="Alt Text (for accessibility)",
+                placeholder="Describe the image for screen readers...",
+                max_length=200,
+                required=False,
+                style=discord.TextStyle.paragraph
+            )
+            self.add_item(self.alt_text_input)
+        else:
+            # Alt text provided via command parameter, no need for modal field
+            self.alt_text_input = None
     
     async def _add_type_specific_data(self, post_data: PostData):
         """Add media-specific data to post with validation."""
@@ -317,8 +322,12 @@ class MediaModal(BasePostModal):
         
         post_data.media_url = media_url.strip()
         
-        # Add alt text if provided
-        if self.alt_text_input.value:
+        # Add alt text - prioritize command parameter, then modal input
+        if self.command_alt_text:
+            # Alt text provided via command parameter
+            post_data.media_alt = self.command_alt_text.strip()
+        elif self.alt_text_input and self.alt_text_input.value:
+            # Alt text provided via modal field
             post_data.media_alt = self.alt_text_input.value.strip()
 
 
@@ -345,7 +354,8 @@ async def ping_command(interaction: discord.Interaction):
 @app_commands.describe(
     post_type="Type of post to create",
     response_type="Type of response (only for response posts)",
-    attachment="Upload a file for media posts (optional)"
+    attachment="Upload a file for media posts (optional)",
+    alt_text="Alt text for accessibility (media posts only)"
 )
 @app_commands.choices(
     post_type=[
@@ -364,7 +374,8 @@ async def post_command(
     interaction: discord.Interaction, 
     post_type: str, 
     response_type: str = "reply",
-    attachment: Optional[discord.Attachment] = None
+    attachment: Optional[discord.Attachment] = None,
+    alt_text: Optional[str] = None
 ):
     """Main post command handler with optional file attachment support."""
     bot = interaction.client
@@ -416,13 +427,17 @@ async def post_command(
         if post_type_enum == PostType.RESPONSE:
             modal = modal_class(bot, response_type)
         elif post_type_enum == PostType.MEDIA and attachment:
-            # Pass attachment information to MediaModal
+            # Pass attachment information and alt_text to MediaModal
             modal = modal_class(
                 bot, 
                 attachment_url=attachment.url,
                 attachment_filename=attachment.filename,
-                attachment_content_type=attachment.content_type
+                attachment_content_type=attachment.content_type,
+                alt_text=alt_text
             )
+        elif post_type_enum == PostType.MEDIA:
+            # Pass alt_text to MediaModal even without attachment
+            modal = modal_class(bot, alt_text=alt_text)
         else:
             modal = modal_class(bot)
             

@@ -1,4 +1,32 @@
-# Discord Publish Bot - Project Backlog
+# Discord Publish Bot - Pr### 🎯 ACTIVE ENHANCEMENT: Custom Slug & Alt Text Implementation
+**Priority**: High - User-requested UX improvement  
+**Business Value**: Enhanced SEO control and improved accessibility workflow  
+**Technical Approach**: Command parameter for alt text + optional slug field in modals  
+
+#### ✅ Phase 1: Foundation Changes (Complete)
+- [x] Update PostData model with optional slug field
+- [x] Enhance generate_filename() function with slug priority
+- [x] Add alt_text parameter to command signature  
+- [x] Create unit tests for slug generation logic
+- [x] **18/18 unit tests passing**
+
+#### 🔄 Phase 2: Modal Integration (Ready to Start)
+- [ ] Add slug input field to NoteModal
+- [ ] Add slug input field to ResponseModal
+- [ ] Add slug input field to BookmarkModal
+- [ ] Update MediaModal to use command alt_text
+- [ ] Remove alt_text input field from MediaModal
+- [ ] **Timeline**: 4-6 hours
+
+#### 📋 Phase 3: Integration & Testing (Planned)
+- [ ] Update interactions.py HTTP handler
+- [ ] Test all modal types with slug field
+- [ ] Validate alt_text parameter handling
+- [ ] End-to-end testing of filename generation
+- [ ] Production deployment validation
+- [ ] **Timeline**: 4-6 hours
+
+**Technical Specification**: `specs/technical/custom-slug-alt-text-enhancement.md`og
 
 ## Project Overview
 **Project Name:** Discord Publish Bot  
@@ -19,12 +47,44 @@ Create an automated Discord bot that enables seamless publishing of Discord cont
 - ✅ **ENHANCEMENT COMPLETE**: Branch/PR workflow, VS Code snippet compliance, correct directory structure
 
 ## Current Sprint Information
-**Status:** ✅ PROJECT COMPLETE + CRITICAL BREAKTHROUGH ACHIEVED 🎉  
+**Status:** 🚀 ENHANCEMENT PLANNING - Custom Slug & Alt Text Optimization  
 **Latest Achievement:** Discord attachment functionality breakthrough (v2.0.3)  
-**Completion Date:** 2025-08-11  
-**Final Assessment:** Production-ready Discord publishing bot operational on Azure Container Apps with complete attachment support
+**Core Platform Completion:** 2025-08-11  
+**Current Enhancement:** Custom slug field and alt text parameter optimization for improved UX
 
-### 🎉 CRITICAL BREAKTHROUGH: Discord Attachment Support Complete (v2.0.3)
+### 🎯 ACTIVE ENHANCEMENT: Custom Slug & Alt Text Implementation
+**Priority**: High - User-requested UX improvement  
+**Business Value**: Enhanced SEO control and improved accessibility workflow  
+**Technical Approach**: Command parameter for alt text + optional slug field in modals  
+**Status**: Planning complete, ready for implementation
+
+### � ACTIVE ENHANCEMENT: Custom Slug & Alt Text Implementation
+**Priority**: High - User-requested UX improvement  
+**Business Value**: Enhanced SEO control and improved accessibility workflow  
+**Technical Approach**: Command parameter for alt text + optional slug field in modals  
+**Status**: Planning complete, ready for implementation
+
+### 📋 Enhancement Backlog
+
+#### 🎨 User Experience Improvements
+- **Custom Slug Fields**: `[ ]` Add optional slug override to all post types for SEO control
+  - **Status**: ⚡ Ready for implementation  
+  - **Technical Spec**: `specs/technical/custom-slug-alt-text-enhancement.md`
+  - **Implementation Phases**: 3 phases (Foundation → Modal Integration → Testing & Deployment)
+  - **Timeline Estimate**: 1-2 days implementation + testing
+  - **Dependencies**: None - enhances existing functionality
+
+- **Alt Text Parameter Optimization**: `[ ]` Move alt text from modal field to command parameter
+  - **Status**: ⚡ Ready for implementation (part of slug enhancement)
+  - **Benefits**: Frees modal space, improves accessibility workflow
+  - **User Impact**: Better UX - alt text provided at upload time, not as afterthought
+
+#### 🔄 Future Considerations
+- **Real-time Slug Validation**: `[ ]` Add preview and validation feedback for slug fields
+- **Bulk Content Migration**: `[ ]` Tools for migrating existing content with custom slugs
+- **SEO Optimization Hints**: `[ ]` Intelligent suggestions for slug optimization
+
+### �🎉 CRITICAL BREAKTHROUGH: Discord Attachment Support Complete (v2.0.3)
 **AUTONOMOUS FRAMEWORK SUCCESS**: Resolved critical attachment parameter extraction issue with user-validated success
 - ✅ **Root Cause Discovery**: Discord sends attachment ID in `option["value"]`, not `option["attachment"]`
 - ✅ **Technical Resolution**: Two-step resolution from `interaction["data"]["resolved"]["attachments"][attachment_id]`
