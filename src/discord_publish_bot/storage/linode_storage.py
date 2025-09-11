@@ -299,6 +299,18 @@ class LinodeStorageService:
             # Fallback to direct Linode Object Storage URL
             return f"{self.endpoint_url.replace('https://', f'https://{self.bucket_name}.')}/{object_key}"
     
+    def get_url(self, object_key: str) -> str:
+        """
+        Public method to get permanent URL for an object key.
+        
+        Args:
+            object_key: The object key (e.g., "files/images/photo.jpg")
+            
+        Returns:
+            Full URL to access the object
+        """
+        return self._generate_permanent_url(object_key)
+    
     async def cleanup_expired_content(self, days_old: int = 365) -> int:
         """
         Clean up old content from storage (optional maintenance function).

@@ -134,6 +134,13 @@ class AzureStorageSettings(BaseModel):
     container_name: str = Field(default="discord-media", description="Blob container for Discord media")
     cdn_endpoint: Optional[str] = Field(None, description="Azure CDN endpoint for improved performance")
     
+    # Custom Domain Configuration (for compatibility with Linode)
+    custom_domain: Optional[str] = Field(None, description="Custom domain for Azure CDN")
+    use_custom_domain: bool = Field(default=False, description="Use custom domain instead of direct blob URLs")
+    
+    # Authentication Configuration
+    use_managed_identity: bool = Field(default=True, description="Use Azure Managed Identity for authentication")
+    
     # Media Type Folder Configuration
     images_folder: str = Field(default="images", description="Folder for image files")
     videos_folder: str = Field(default="videos", description="Folder for video files")
@@ -298,6 +305,9 @@ class AppSettings(BaseSettings):
                 account_name=os.getenv("AZURE_STORAGE_ACCOUNT_NAME"),
                 container_name=os.getenv("AZURE_STORAGE_CONTAINER_NAME", "discord-media"),
                 cdn_endpoint=os.getenv("AZURE_STORAGE_CDN_ENDPOINT"),
+                custom_domain=os.getenv("AZURE_STORAGE_CUSTOM_DOMAIN"),
+                use_custom_domain=os.getenv("AZURE_STORAGE_USE_CUSTOM_DOMAIN", "false").lower() == "true",
+                use_managed_identity=os.getenv("AZURE_STORAGE_USE_MANAGED_IDENTITY", "true").lower() == "true",
                 images_folder=os.getenv("AZURE_STORAGE_IMAGES_FOLDER", "images"),
                 videos_folder=os.getenv("AZURE_STORAGE_VIDEOS_FOLDER", "videos"),
                 audio_folder=os.getenv("AZURE_STORAGE_AUDIO_FOLDER", "audio"),
