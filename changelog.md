@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.5.0] - 2025-09-10 - 🎉 LINODE OBJECT STORAGE - PHASE 3 MIGRATION VALIDATION COMPLETE
+
+### Completed
+- **Phase 3 Migration Validation**: All 6/6 validation tests passing ✅
+  - **Provider Configuration**: Both Azure and Linode properly configured and enabled
+  - **Provider Switching**: LinodeStorageService functional with proper factory integration  
+  - **URL Format Comparison**: Custom domain URLs working (`https://cdn.lqdev.tech/files/images/...`)
+  - **Upload Simulation**: Storage service ready for production uploads
+  - **Media Type Classification**: All media types properly detected and routed
+  - **Feature Flag Readiness**: Both providers available for seamless switching
+
+### Technical Improvements
+- **Environment Configuration**: Fixed `ENABLE_*_STORAGE` variable naming consistency
+- **LinodeStorageService**: Added public `get_url()` method for URL generation
+- **Azure Settings**: Enhanced compatibility with `use_managed_identity` and `use_custom_domain` fields
+- **Environment Parser**: Improved to handle inline comments in .env files
+- **Validation Suite**: Comprehensive Phase 3 test framework created
+
+### Migration Status
+- ✅ **Phase 1**: Foundation Enhancement (Complete)
+- ✅ **Phase 2**: Core Implementation with Public Read ACL (Complete) 
+- ✅ **Phase 3**: Migration Validation (Complete - 6/6 tests passing)
+- 🎯 **Phase 4**: Production Deployment (Ready to begin)
+
+### Next Steps
+- Phase 4 production deployment and real Discord attachment testing
+- Production URL validation and performance monitoring
+- Legacy Azure storage dependency removal after successful migration
+
+---
+
 ## [2.4.0] - 2025-09-10 - 🚀 LINODE OBJECT STORAGE - PHASE 2 COMPLETE
 
 ### Added
