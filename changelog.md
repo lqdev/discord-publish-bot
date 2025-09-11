@@ -7,6 +7,83 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.6.0] - 2025-09-11 - 🚀 LINODE OBJECT STORAGE - PHASE 4 PRODUCTION DEPLOYMENT COMPLETE
+
+### Completed
+- **Phase 4 Production Deployment**: Linode Object Storage successfully deployed to production ✅
+  - **Storage Provider Logic Fixed**: Updated `_process_media_uploads` method to properly use storage provider selection
+  - **Region Configuration Resolved**: Fixed hardcoded `us-east-1` default causing incorrect endpoint selection
+  - **Systematic Framework Integration**: Eliminated manual workarounds following copilot-instructions.md principles
+  - **Complete Environment Configuration**: All 18 environment variables properly configured with secret references
+  - **Deployment Automation Enhanced**: azure-secrets-setup.ps1 now automatically generates endpoint URLs from region
+
+### Added
+- **Automatic Endpoint Generation**: azure-secrets-setup.ps1 automatically creates `linode-storage-endpoint-url` from region
+- **Complete Documentation Integration**: Updated azure-deployment-runbook.md with full Linode configuration
+- **Production Validation**: Health endpoint confirms successful deployment (revision ca-discord-publish-bot--0000055)
+
+### Fixed
+- **Storage Provider Selection**: Removed legacy `settings.azure_storage.enabled` check preventing Linode usage
+- **Environment Variable Completeness**: Added missing `LINODE_STORAGE_ENDPOINT_URL` to deployment framework
+- **One-Off Prevention**: Integrated all configuration into established templates and scripts
+
+### Technical Architecture
+- **Dual Storage Provider Support**: Functional Linode-first with Discord URL fallback architecture
+- **Custom Domain Integration**: Production configured for `https://cdn.lqdev.tech/*` URL generation
+- **Zero Downtime Deployment**: Container Apps revision model enables seamless updates
+- **Secret Management**: All 16 secrets properly encrypted and referenced in Azure Container Apps
+
+## [2.5.0] - 2025-09-10 - 🎉 LINODE OBJECT STORAGE - PHASE 3 MIGRATION VALIDATION COMPLETE
+
+### Completed
+- **Phase 3 Migration Validation**: All 6/6 validation tests passing ✅
+  - **Provider Configuration**: Both Azure and Linode properly configured and enabled
+  - **Provider Switching**: LinodeStorageService functional with proper factory integration  
+  - **URL Format Comparison**: Custom domain URLs working (`https://cdn.lqdev.tech/files/images/...`)
+  - **Upload Simulation**: Storage service ready for production uploads
+  - **Media Type Classification**: All media types properly detected and routed
+  - **Feature Flag Readiness**: Both providers available for seamless switching
+
+### Technical Improvements
+- **Environment Configuration**: Fixed `ENABLE_*_STORAGE` variable naming consistency
+- **LinodeStorageService**: Added public `get_url()` method for URL generation
+- **Azure Settings**: Enhanced compatibility with `use_managed_identity` and `use_custom_domain` fields
+- **Environment Parser**: Improved to handle inline comments in .env files
+- **Validation Suite**: Comprehensive Phase 3 test framework created
+
+### Migration Status
+- ✅ **Phase 1**: Foundation Enhancement (Complete)
+- ✅ **Phase 2**: Core Implementation with Public Read ACL (Complete) 
+- ✅ **Phase 3**: Migration Validation (Complete - 6/6 tests passing)
+- 🎯 **Phase 4**: Production Deployment (Ready to begin)
+
+### Next Steps
+- Phase 4 production deployment and real Discord attachment testing
+- Production URL validation and performance monitoring
+- Legacy Azure storage dependency removal after successful migration
+
+---
+
+## [2.4.0] - 2025-09-10 - 🚀 LINODE OBJECT STORAGE - PHASE 2 COMPLETE
+
+### Added
+- **Linode Object Storage Migration - Phase 2**: Core Implementation
+  - Complete LinodeStorageService with S3-compatible API
+  - **Public read ACL**: All uploads automatically set to `public-read` for immediate CDN access
+  - Custom domain URL generation: `https://cdn.lqdev.tech/files/images/filename.jpg`
+  - Media type organization: images/, videos/, audio/, documents/, other/ folders
+  - Async boto3 operations with proper error handling
+  - Content-Type detection from Discord headers and filename fallback
+  - Factory pattern integration for seamless provider switching
+  - Phase 2 validation test suite with 5/5 tests passing
+
+### Technical Details
+- boto3==1.34.0 and botocore==1.34.0 dependencies added
+- S3-compatible client with virtual-hosted-style addressing
+- Automatic filename sanitization and timestamp prefixing
+- Storage statistics and cleanup utilities for maintenance
+- Complete protocol compliance with existing Azure storage interface
+
 ## [2.3.1] - 2025-09-07 - 🔧 CRITICAL SLUG FUNCTIONALITY FIX ✅ DEPLOYED
 
 ### 🔴 Critical Bug Fix: Custom Slug Parameter Missing in Publishing Service

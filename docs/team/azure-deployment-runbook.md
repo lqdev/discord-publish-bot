@@ -44,9 +44,21 @@ az containerapp env create \
   --location <your-region>
 ```
 
-### 2. Deploy Application
+### 2. Configure Secrets (REQUIRED FIRST)
 
-#### 2.1 Deploy Container App
+#### 2.1 Run Secrets Setup Script
+```bash
+# Use discovered values from step 0
+# CRITICAL: Create secrets BEFORE deployment references them
+./scripts/azure-secrets-setup.ps1 \
+  -ResourceGroupName <discovered-resource-group> \
+  -ContainerAppName <discovered-container-app-name> \
+  -EnvFile .env.production
+```
+
+### 3. Deploy Application
+
+#### 3.1 Deploy Container App
 ```bash
 # Use values discovered in step 0
 az containerapp up \
@@ -56,21 +68,27 @@ az containerapp up \
   --env-vars ENVIRONMENT=production
 ```
 
-#### 2.2 ⚠️ CRITICAL: Configure Environment Variables with Secrets
+#### 3.2 ⚠️ CRITICAL: Configure Environment Variables with Secrets
 **Note**: `az containerapp up` resets environment configuration. Always run this after deployment:
 
 ```bash
 # Use discovered values from step 0
+# Phase 4 Production Deployment: Configure for Linode Object Storage
 az containerapp update \
   --name <discovered-container-app-name> \
   --resource-group <discovered-resource-group> \
   --set-env-vars \
     ENVIRONMENT=production \
-    AZURE_STORAGE_USE_RELATIVE_PATHS=true \
-    AZURE_STORAGE_USE_SAS_TOKENS=false \
-    ENABLE_AZURE_STORAGE=true \
-    AZURE_STORAGE_ACCOUNT_NAME=secretref:azure-storage-account-name \
-    AZURE_STORAGE_CONTAINER_NAME=secretref:azure-storage-container-name \
+    STORAGE_PROVIDER=linode \
+    ENABLE_LINODE_STORAGE=true \
+    LINODE_STORAGE_ACCESS_KEY_ID=secretref:linode-storage-access-key-id \
+    LINODE_STORAGE_SECRET_ACCESS_KEY=secretref:linode-storage-secret-access-key \
+    LINODE_STORAGE_BUCKET_NAME=secretref:linode-storage-bucket-name \
+    LINODE_STORAGE_REGION=secretref:linode-storage-region \
+    LINODE_STORAGE_ENDPOINT_URL=secretref:linode-storage-endpoint-url \
+    LINODE_STORAGE_CUSTOM_DOMAIN=secretref:linode-storage-custom-domain \
+    LINODE_STORAGE_USE_CUSTOM_DOMAIN=true \
+    LINODE_STORAGE_BASE_PATH=files \
     DISCORD_BOT_TOKEN=secretref:discord-bot-token \
     DISCORD_APPLICATION_ID=secretref:discord-application-id \
     DISCORD_PUBLIC_KEY=secretref:discord-public-key \
@@ -80,15 +98,27 @@ az containerapp update \
     API_KEY=secretref:api-key
 ```
 
-### 3. Configure Secrets
-
-#### 3.1 Run Secrets Setup Script
+**Legacy Azure Storage Configuration (for rollback):**
 ```bash
-# Use discovered values from step 0
-./scripts/azure-secrets-setup.ps1 \
-  -ResourceGroupName <discovered-resource-group> \
-  -ContainerAppName <discovered-container-app-name> \
-  -EnvFile .env.production
+# Fallback configuration if Azure storage needed
+az containerapp update \
+  --name <discovered-container-app-name> \
+  --resource-group <discovered-resource-group> \
+  --set-env-vars \
+    ENVIRONMENT=production \
+    STORAGE_PROVIDER=azure \
+    ENABLE_AZURE_STORAGE=true \
+    AZURE_STORAGE_USE_RELATIVE_PATHS=true \
+    AZURE_STORAGE_USE_SAS_TOKENS=false \
+    AZURE_STORAGE_ACCOUNT_NAME=secretref:azure-storage-account-name \
+    AZURE_STORAGE_CONTAINER_NAME=secretref:azure-storage-container-name \
+    DISCORD_BOT_TOKEN=secretref:discord-bot-token \
+    DISCORD_APPLICATION_ID=secretref:discord-application-id \
+    DISCORD_PUBLIC_KEY=secretref:discord-public-key \
+    DISCORD_USER_ID=secretref:discord-user-id \
+    GITHUB_TOKEN=secretref:github-token \
+    GITHUB_REPO=secretref:github-repo \
+    API_KEY=secretref:api-key
 ```
 
 ### 4. Verification
@@ -151,8 +181,8 @@ az containerapp revision list \
 **Cause**: Missing secrets or environment variables
 **Solution**: 
 1. Verify secrets exist: `az containerapp secret list --name <app> --resource-group <rg>`
-2. Run secrets setup script (step 3.1)
-3. Configure environment variables (step 2.2)
+2. Run secrets setup script (step 2.1)
+3. Configure environment variables (step 3.2)
 
 ### Discord Interactions Not Working
 **Symptom**: Discord commands don't respond
@@ -161,6 +191,7 @@ az containerapp revision list \
 
 ## 📋 Environment Variables Reference
 
+### Core Application Variables
 | Variable | Secret Ref | Description |
 |----------|------------|-------------|
 | `DISCORD_BOT_TOKEN` | `discord-bot-token` | Bot authentication token |
@@ -171,6 +202,33 @@ az containerapp revision list \
 | `GITHUB_REPO` | `github-repo` | Target repository |
 | `API_KEY` | `api-key` | API authentication key |
 | `ENVIRONMENT` | (direct) | Set to `production` |
+
+### Storage Provider Configuration
+| Variable | Secret Ref | Description |
+|----------|------------|-------------|
+| `STORAGE_PROVIDER` | `storage-provider` | Storage provider (`azure` or `linode`) |
+
+### Linode Object Storage Variables (Phase 4 Production)
+| Variable | Secret Ref | Description |
+|----------|------------|-------------|
+| `LINODE_STORAGE_ACCESS_KEY_ID` | `linode-storage-access-key-id` | Linode access key |
+| `LINODE_STORAGE_SECRET_ACCESS_KEY` | `linode-storage-secret-access-key` | Linode secret key |
+| `LINODE_STORAGE_BUCKET_NAME` | `linode-storage-bucket-name` | Bucket name (e.g., `cdn.lqdev.tech`) |
+| `LINODE_STORAGE_REGION` | `linode-storage-region` | Region (e.g., `us-ord-1`) |
+| `LINODE_STORAGE_ENDPOINT_URL` | `linode-storage-endpoint-url` | S3-compatible endpoint URL (auto-generated from region) |
+| `LINODE_STORAGE_CUSTOM_DOMAIN` | `linode-storage-custom-domain` | Custom domain (e.g., `https://cdn.lqdev.tech`) |
+| `LINODE_STORAGE_USE_CUSTOM_DOMAIN` | (direct) | Set to `true` |
+| `LINODE_STORAGE_BASE_PATH` | (direct) | Set to `files` |
+| `ENABLE_LINODE_STORAGE` | (direct) | Set to `true` |
+
+### Azure Storage Variables (Legacy/Fallback)
+| Variable | Secret Ref | Description |
+|----------|------------|-------------|
+| `AZURE_STORAGE_ACCOUNT_NAME` | `azure-storage-account-name` | Storage account name |
+| `AZURE_STORAGE_CONTAINER_NAME` | `azure-storage-container-name` | Container name |
+| `AZURE_STORAGE_USE_RELATIVE_PATHS` | (direct) | Set to `true` |
+| `AZURE_STORAGE_USE_SAS_TOKENS` | (direct) | Set to `false` |
+| `ENABLE_AZURE_STORAGE` | (direct) | Set to `true` (for Azure mode) |
 
 ## 🔒 Security Notes
 

@@ -134,6 +134,13 @@ class AzureStorageSettings(BaseModel):
     container_name: str = Field(default="discord-media", description="Blob container for Discord media")
     cdn_endpoint: Optional[str] = Field(None, description="Azure CDN endpoint for improved performance")
     
+    # Custom Domain Configuration (for compatibility with Linode)
+    custom_domain: Optional[str] = Field(None, description="Custom domain for Azure CDN")
+    use_custom_domain: bool = Field(default=False, description="Use custom domain instead of direct blob URLs")
+    
+    # Authentication Configuration
+    use_managed_identity: bool = Field(default=True, description="Use Azure Managed Identity for authentication")
+    
     # Media Type Folder Configuration
     images_folder: str = Field(default="images", description="Folder for image files")
     videos_folder: str = Field(default="videos", description="Folder for video files")
@@ -157,6 +164,54 @@ class AzureStorageSettings(BaseModel):
     def validate_container_name(cls, v):
         if not v.islower() or not v.replace('-', '').isalnum():
             raise ValueError('Container name must be lowercase alphanumeric with hyphens')
+        return v
+    
+    @validator('images_folder', 'videos_folder', 'audio_folder', 'documents_folder', 'other_folder')
+    def validate_folder_names(cls, v):
+        if not v.islower() or not v.replace('-', '').replace('_', '').isalnum():
+            raise ValueError('Folder names must be lowercase alphanumeric with hyphens or underscores')
+        return v
+
+
+class LinodeStorageSettings(BaseModel):
+    """Linode Object Storage configuration for permanent media hosting."""
+    
+    model_config = ConfigDict(extra='ignore')
+    
+    # Linode Object Storage Credentials (S3-compatible)
+    access_key_id: Optional[str] = Field(None, description="Linode Object Storage access key ID")
+    secret_access_key: Optional[str] = Field(None, description="Linode Object Storage secret access key")
+    endpoint_url: str = Field(default="https://us-east-1.linodeobjects.com", description="Linode Object Storage endpoint URL")
+    bucket_name: Optional[str] = Field(None, description="S3-compatible bucket for Discord media")
+    region: str = Field(default="us-east-1", description="Linode Object Storage region")
+    
+    # Custom Domain Configuration
+    custom_domain: str = Field(default="https://your-cdn-domain.com", description="Custom CDN domain for media URLs")
+    use_custom_domain: bool = Field(default=True, description="Use custom domain instead of direct bucket URLs")
+    base_path: str = Field(default="files", description="Base path for media organization")
+    
+    # Media Type Folder Configuration (matching Azure structure)
+    images_folder: str = Field(default="images", description="Folder for image files")
+    videos_folder: str = Field(default="videos", description="Folder for video files") 
+    audio_folder: str = Field(default="audio", description="Folder for audio files")
+    documents_folder: str = Field(default="documents", description="Folder for document files")
+    other_folder: str = Field(default="other", description="Folder for other file types")
+    
+    # Feature Flags
+    enabled: bool = Field(default=False, description="Enable Linode Object Storage for media hosting")
+    use_signed_urls: bool = Field(default=False, description="Use signed URLs for private access")
+    url_expiry_hours: int = Field(default=8760, description="Signed URL expiry in hours (default: 1 year)")
+    
+    @validator('bucket_name')
+    def validate_bucket_name(cls, v):
+        if v is not None and (not v.islower() or not v.replace('-', '').replace('.', '').isalnum()):
+            raise ValueError('Bucket name must be lowercase alphanumeric with hyphens or dots')
+        return v
+    
+    @validator('custom_domain')
+    def validate_custom_domain(cls, v):
+        if not v.startswith(('http://', 'https://')):
+            raise ValueError('Custom domain must be a valid URL')
         return v
     
     @validator('images_folder', 'videos_folder', 'audio_folder', 'documents_folder', 'other_folder')
@@ -194,12 +249,19 @@ class AppSettings(BaseSettings):
         description="Logging level"
     )
     
+    # Storage Provider Configuration
+    storage_provider: Literal["azure", "linode"] = Field(
+        default="azure",
+        description="Storage provider selection (azure or linode)"
+    )
+    
     # Component Settings
     discord: DiscordSettings
     github: GitHubSettings  
     api: APISettings
     publishing: PublishingSettings
-    azure_storage: AzureStorageSettings
+    azure_storage: AzureStorageSettings = Field(default_factory=AzureStorageSettings)
+    linode_storage: LinodeStorageSettings = Field(default_factory=LinodeStorageSettings)
     
     @classmethod
     def from_env(cls) -> "AppSettings":
@@ -211,6 +273,7 @@ class AppSettings(BaseSettings):
         return cls(
             environment=os.getenv("ENVIRONMENT", "development"),
             log_level=os.getenv("LOG_LEVEL", "INFO"),
+            storage_provider=os.getenv("STORAGE_PROVIDER", "azure"),
             
             discord=DiscordSettings(
                 bot_token=os.getenv("DISCORD_BOT_TOKEN", ""),
@@ -242,6 +305,9 @@ class AppSettings(BaseSettings):
                 account_name=os.getenv("AZURE_STORAGE_ACCOUNT_NAME"),
                 container_name=os.getenv("AZURE_STORAGE_CONTAINER_NAME", "discord-media"),
                 cdn_endpoint=os.getenv("AZURE_STORAGE_CDN_ENDPOINT"),
+                custom_domain=os.getenv("AZURE_STORAGE_CUSTOM_DOMAIN"),
+                use_custom_domain=os.getenv("AZURE_STORAGE_USE_CUSTOM_DOMAIN", "false").lower() == "true",
+                use_managed_identity=os.getenv("AZURE_STORAGE_USE_MANAGED_IDENTITY", "true").lower() == "true",
                 images_folder=os.getenv("AZURE_STORAGE_IMAGES_FOLDER", "images"),
                 videos_folder=os.getenv("AZURE_STORAGE_VIDEOS_FOLDER", "videos"),
                 audio_folder=os.getenv("AZURE_STORAGE_AUDIO_FOLDER", "audio"),
@@ -251,6 +317,25 @@ class AppSettings(BaseSettings):
                 use_relative_paths=os.getenv("AZURE_STORAGE_USE_RELATIVE_PATHS", "true").lower() == "true",
                 use_sas_tokens=os.getenv("AZURE_STORAGE_USE_SAS_TOKENS", "true").lower() == "true",
                 sas_expiry_hours=int(os.getenv("AZURE_STORAGE_SAS_EXPIRY_HOURS", "8760")),
+            ),
+            
+            linode_storage=LinodeStorageSettings(
+                access_key_id=os.getenv("LINODE_STORAGE_ACCESS_KEY_ID"),
+                secret_access_key=os.getenv("LINODE_STORAGE_SECRET_ACCESS_KEY"),
+                endpoint_url=os.getenv("LINODE_STORAGE_ENDPOINT_URL", "https://us-east-1.linodeobjects.com"),
+                bucket_name=os.getenv("LINODE_STORAGE_BUCKET_NAME"),
+                region=os.getenv("LINODE_STORAGE_REGION", "us-east-1"),
+                custom_domain=os.getenv("LINODE_STORAGE_CUSTOM_DOMAIN", "https://cdn.lqdev.tech"),
+                use_custom_domain=os.getenv("LINODE_STORAGE_USE_CUSTOM_DOMAIN", "true").lower() == "true",
+                base_path=os.getenv("LINODE_STORAGE_BASE_PATH", "files"),
+                images_folder=os.getenv("LINODE_STORAGE_IMAGES_FOLDER", "images"),
+                videos_folder=os.getenv("LINODE_STORAGE_VIDEOS_FOLDER", "videos"),
+                audio_folder=os.getenv("LINODE_STORAGE_AUDIO_FOLDER", "audio"),
+                documents_folder=os.getenv("LINODE_STORAGE_DOCUMENTS_FOLDER", "documents"),
+                other_folder=os.getenv("LINODE_STORAGE_OTHER_FOLDER", "other"),
+                enabled=os.getenv("ENABLE_LINODE_STORAGE", "false").lower() == "true",
+                use_signed_urls=os.getenv("LINODE_STORAGE_USE_SIGNED_URLS", "false").lower() == "true",
+                url_expiry_hours=int(os.getenv("LINODE_STORAGE_URL_EXPIRY_HOURS", "8760")),
             )
         )
     
