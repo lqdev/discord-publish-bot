@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.4.0] - 2025-09-10 - 🚀 LINODE OBJECT STORAGE - PHASE 2 COMPLETE
+
+### Added
+- **Linode Object Storage Migration - Phase 2**: Core Implementation
+  - Complete LinodeStorageService with S3-compatible API
+  - **Public read ACL**: All uploads automatically set to `public-read` for immediate CDN access
+  - Custom domain URL generation: `https://cdn.lqdev.tech/files/images/filename.jpg`
+  - Media type organization: images/, videos/, audio/, documents/, other/ folders
+  - Async boto3 operations with proper error handling
+  - Content-Type detection from Discord headers and filename fallback
+  - Factory pattern integration for seamless provider switching
+  - Phase 2 validation test suite with 5/5 tests passing
+
+### Technical Details
+- boto3==1.34.0 and botocore==1.34.0 dependencies added
+- S3-compatible client with virtual-hosted-style addressing
+- Automatic filename sanitization and timestamp prefixing
+- Storage statistics and cleanup utilities for maintenance
+- Complete protocol compliance with existing Azure storage interface
+
 ## [2.3.1] - 2025-09-07 - 🔧 CRITICAL SLUG FUNCTIONALITY FIX ✅ DEPLOYED
 
 ### 🔴 Critical Bug Fix: Custom Slug Parameter Missing in Publishing Service
