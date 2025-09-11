@@ -23,7 +23,9 @@ from ..shared import (
     format_frontmatter,
     parse_tags,
     sanitize_content,
-    validate_url
+    validate_url,
+    is_youtube_url,
+    generate_youtube_embed
 )
 from .github_client import GitHubClient
 
@@ -505,6 +507,16 @@ class PublishingService:
         """
         # Sanitize content
         clean_content = sanitize_content(content)
+        
+        # For response posts, check if target URL is YouTube and auto-generate embed
+        if (post_data.post_type == PostType.RESPONSE and 
+            post_data.target_url and 
+            is_youtube_url(post_data.target_url)):
+            
+            youtube_embed = generate_youtube_embed(post_data.target_url, post_data.title)
+            if youtube_embed:
+                clean_content = f"{clean_content}\n\n{youtube_embed}"
+                logger.info(f"Added YouTube embed for URL: {post_data.target_url}")
         
         # For media posts, append :::media block if media URL exists
         if post_data.post_type == PostType.MEDIA and post_data.media_url:

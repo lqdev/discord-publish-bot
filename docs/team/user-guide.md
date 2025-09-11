@@ -65,21 +65,40 @@ type: note
 Your note content here with **Markdown** support!
 ```
 
-### `/post response` - Reply to Content
+### `/post response` - Reply to Content 🎬 ENHANCED!
 **Best for**: Responding to articles, social media posts, videos
+
+**🎬 NEW: YouTube Video Support!**
+When you paste a YouTube URL in the Target URL field, the system automatically adds a video embed to your post!
 
 **Example Usage**:
 ```
-/post response
+/post response star
 ```
 
 **Modal Form**:
 - **Response Type**: Like, Reply, Repost, Bookmark
 - **Content**: Your response content
-- **Original URL**: Link to what you're responding to
+- **Original URL**: Link to what you're responding to (YouTube URLs auto-enhanced!)
 - **Tags** (optional): Relevant tags
 
-**Generated Output**:
+**Generated Output** (with YouTube URL):
+```markdown
+---
+title: "Awesome YouTube Video"
+targeturl: https://www.youtube.com/watch?v=AtR1yVmCCvw
+response_type: star
+dt_published: "2025-09-11 15:30 -05:00"
+dt_updated: "2025-09-11 15:30 -05:00"
+tags: ["music", "video"]
+---
+
+I never knew I needed this in my life.
+
+[![Awesome YouTube Video](http://img.youtube.com/vi/AtR1yVmCCvw/0.jpg)](https://www.youtube.com/watch?v=AtR1yVmCCvw "Awesome YouTube Video")
+```
+
+**Generated Output** (regular article):
 ```markdown
 ---
 title: "Response to Article Title"

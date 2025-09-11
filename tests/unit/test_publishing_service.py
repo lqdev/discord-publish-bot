@@ -312,3 +312,106 @@ class TestPublishingUtilities:
         assert hash1 == hash2  # Same content should have same hash
         assert hash1 != hash3  # Different content should have different hash
         assert len(hash1) > 0  # Hash should not be empty
+
+    def test_youtube_url_detection(self):
+        """Test YouTube URL detection and video ID extraction."""
+        from discord_publish_bot.shared.utils import (
+            extract_youtube_video_id, is_youtube_url, generate_youtube_embed
+        )
+        
+        # Test various YouTube URL formats
+        test_urls = [
+            ("https://www.youtube.com/watch?v=AtR1yVmCCvw", "AtR1yVmCCvw"),
+            ("https://youtu.be/AtR1yVmCCvw", "AtR1yVmCCvw"),
+            ("https://youtube.com/watch?v=AtR1yVmCCvw", "AtR1yVmCCvw"),
+            ("https://m.youtube.com/watch?v=AtR1yVmCCvw", "AtR1yVmCCvw"),
+            ("https://www.youtube.com/watch?v=AtR1yVmCCvw&t=30s", "AtR1yVmCCvw"),
+            ("https://example.com/not-youtube", None),  # Non-YouTube URL
+            ("", None),  # Empty string
+            (None, None),  # None input
+        ]
+        
+        for url, expected_id in test_urls:
+            video_id = extract_youtube_video_id(url)
+            assert video_id == expected_id, f"Failed for URL: {url}"
+            
+            # Test is_youtube_url consistency
+            assert is_youtube_url(url or "") == (expected_id is not None)
+
+    def test_youtube_embed_generation(self):
+        """Test YouTube embed markdown generation."""
+        from discord_publish_bot.shared.utils import generate_youtube_embed
+        
+        url = "https://www.youtube.com/watch?v=AtR1yVmCCvw"
+        title = "Test Video Title"
+        
+        embed = generate_youtube_embed(url, title)
+        
+        assert embed is not None
+        assert "AtR1yVmCCvw" in embed  # Video ID should be in embed
+        assert title in embed  # Title should be in embed
+        assert "http://img.youtube.com/vi/AtR1yVmCCvw/0.jpg" in embed  # Thumbnail URL
+        assert url in embed  # Original URL should be preserved
+        
+        # Test with non-YouTube URL
+        non_youtube_embed = generate_youtube_embed("https://example.com", "Test")
+        assert non_youtube_embed is None
+
+    @pytest.mark.asyncio
+    async def test_youtube_response_post_enhancement(self, publishing_service, test_settings):
+        """Test that response posts with YouTube URLs get automatic embed generation."""
+        from discord_publish_bot.shared import PostData, PostType, ResponseType
+        
+        # Create response post data with YouTube URL
+        youtube_post_data = PostData(
+            title="Awesome YouTube Video",
+            content="This video is amazing!",
+            post_type=PostType.RESPONSE,
+            response_type=ResponseType.REPLY,
+            target_url="https://www.youtube.com/watch?v=AtR1yVmCCvw",
+            tags=["video", "music"],
+            created_by="test_user"
+        )
+        
+        result = await publishing_service.publish_post(youtube_post_data)
+        
+        assert result.success is True
+        
+        # Verify the GitHub client was called with content containing YouTube embed
+        publishing_service.github_client.create_file.assert_called_once()
+        call_args = publishing_service.github_client.create_file.call_args
+        file_content = call_args[1]['content']  # Get content from kwargs
+        
+        # Check that YouTube embed was added to content
+        assert "[![Awesome YouTube Video](http://img.youtube.com/vi/AtR1yVmCCvw/0.jpg)]" in file_content
+        assert "https://www.youtube.com/watch?v=AtR1yVmCCvw" in file_content
+        assert "This video is amazing!" in file_content  # Original content should be preserved
+
+    @pytest.mark.asyncio
+    async def test_non_youtube_response_post_unchanged(self, publishing_service, test_settings):
+        """Test that response posts with non-YouTube URLs are not modified."""
+        from discord_publish_bot.shared import PostData, PostType, ResponseType
+        
+        # Create response post data with non-YouTube URL
+        regular_post_data = PostData(
+            title="Regular Article Response",
+            content="Great article!",
+            post_type=PostType.RESPONSE,
+            response_type=ResponseType.REPLY,
+            target_url="https://example.com/article",
+            tags=["article"],
+            created_by="test_user"
+        )
+        
+        result = await publishing_service.publish_post(regular_post_data)
+        
+        assert result.success is True
+        
+        # Verify the GitHub client was called with unchanged content
+        publishing_service.github_client.create_file.assert_called_once()
+        call_args = publishing_service.github_client.create_file.call_args
+        file_content = call_args[1]['content']
+        
+        # Check that no YouTube embed was added
+        assert "img.youtube.com" not in file_content
+        assert "Great article!" in file_content  # Original content should be preserved

@@ -61,4 +61,7 @@ __all__ = [
     "ensure_directory",
     "format_datetime",
     "mask_sensitive_data",
+    "extract_youtube_video_id",
+    "is_youtube_url",
+    "generate_youtube_embed",
 ]

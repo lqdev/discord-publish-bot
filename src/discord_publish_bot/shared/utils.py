@@ -278,3 +278,79 @@ def mask_sensitive_data(data: str, visible_chars: int = 4) -> str:
         return "*" * len(data)
     
     return data[:visible_chars] + "*" * (len(data) - visible_chars)
+
+
+def extract_youtube_video_id(url: str) -> Optional[str]:
+    """
+    Extract YouTube video ID from various YouTube URL formats.
+    
+    Supports:
+    - https://www.youtube.com/watch?v=VIDEO_ID
+    - https://youtu.be/VIDEO_ID
+    - https://youtube.com/watch?v=VIDEO_ID
+    - https://m.youtube.com/watch?v=VIDEO_ID
+    
+    Args:
+        url: YouTube URL to parse
+        
+    Returns:
+        Video ID if URL is valid YouTube URL, None otherwise
+    """
+    if not url or not isinstance(url, str):
+        return None
+    
+    # Patterns for different YouTube URL formats
+    patterns = [
+        r'(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/embed/)([a-zA-Z0-9_-]{11})',
+        r'youtube\.com/.*[?&]v=([a-zA-Z0-9_-]{11})',
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, url)
+        if match:
+            return match.group(1)
+    
+    return None
+
+
+def is_youtube_url(url: str) -> bool:
+    """
+    Check if URL is a YouTube video URL.
+    
+    Args:
+        url: URL to check
+        
+    Returns:
+        True if URL is a YouTube video URL
+    """
+    return extract_youtube_video_id(url) is not None
+
+
+def generate_youtube_embed(url: str, title: Optional[str] = None) -> Optional[str]:
+    """
+    Generate YouTube embed markdown for a YouTube URL.
+    
+    Creates the specific markdown format:
+    [![TITLE](http://img.youtube.com/vi/VIDEO_ID/0.jpg)](URL "TITLE")
+    
+    Args:
+        url: YouTube URL
+        title: Optional title for the video (fallbacks to generic if not provided)
+        
+    Returns:
+        Markdown embed string or None if URL is not a valid YouTube URL
+    """
+    video_id = extract_youtube_video_id(url)
+    if not video_id:
+        return None
+    
+    # Use provided title or fallback
+    embed_title = title or "YouTube Video"
+    
+    # Generate thumbnail URL
+    thumbnail_url = f"http://img.youtube.com/vi/{video_id}/0.jpg"
+    
+    # Generate embed markdown
+    embed_markdown = f"[![{embed_title}]({thumbnail_url})]({url} \"{embed_title}\")"
+    
+    return embed_markdown
