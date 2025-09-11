@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.6.0] - 2025-09-11 - 🚀 LINODE OBJECT STORAGE - PHASE 4 PRODUCTION DEPLOYMENT COMPLETE
+
+### Completed
+- **Phase 4 Production Deployment**: Linode Object Storage successfully deployed to production ✅
+  - **Storage Provider Logic Fixed**: Updated `_process_media_uploads` method to properly use storage provider selection
+  - **Region Configuration Resolved**: Fixed hardcoded `us-east-1` default causing incorrect endpoint selection
+  - **Systematic Framework Integration**: Eliminated manual workarounds following copilot-instructions.md principles
+  - **Complete Environment Configuration**: All 18 environment variables properly configured with secret references
+  - **Deployment Automation Enhanced**: azure-secrets-setup.ps1 now automatically generates endpoint URLs from region
+
+### Added
+- **Automatic Endpoint Generation**: azure-secrets-setup.ps1 automatically creates `linode-storage-endpoint-url` from region
+- **Complete Documentation Integration**: Updated azure-deployment-runbook.md with full Linode configuration
+- **Production Validation**: Health endpoint confirms successful deployment (revision ca-discord-publish-bot--0000055)
+
+### Fixed
+- **Storage Provider Selection**: Removed legacy `settings.azure_storage.enabled` check preventing Linode usage
+- **Environment Variable Completeness**: Added missing `LINODE_STORAGE_ENDPOINT_URL` to deployment framework
+- **One-Off Prevention**: Integrated all configuration into established templates and scripts
+
+### Technical Architecture
+- **Dual Storage Provider Support**: Functional Linode-first with Discord URL fallback architecture
+- **Custom Domain Integration**: Production configured for `https://cdn.lqdev.tech/*` URL generation
+- **Zero Downtime Deployment**: Container Apps revision model enables seamless updates
+- **Secret Management**: All 16 secrets properly encrypted and referenced in Azure Container Apps
+
 ## [2.5.0] - 2025-09-10 - 🎉 LINODE OBJECT STORAGE - PHASE 3 MIGRATION VALIDATION COMPLETE
 
 ### Completed

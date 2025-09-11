@@ -50,7 +50,17 @@ function Read-EnvFile {
             $parts = $line.Split('=', 2)
             if ($parts.Length -eq 2) {
                 $key = $parts[0].Trim()
-                $value = $parts[1].Trim().Trim('"').Trim("'")
+                $value = $parts[1].Trim()
+                
+                # Handle inline comments - remove everything after # (but preserve # in values if quoted)
+                if ($value.Contains('#') -and -not ($value.StartsWith('"') -or $value.StartsWith("'"))) {
+                    $commentIndex = $value.IndexOf('#')
+                    $value = $value.Substring(0, $commentIndex).Trim()
+                }
+                
+                # Remove surrounding quotes
+                $value = $value.Trim('"').Trim("'")
+                
                 if ($value -and $value -ne "your_" -and -not $value.Contains("_here")) {
                     $envVars[$key] = $value
                 }
@@ -118,22 +128,63 @@ Write-Host "`n🔐 API CONFIGURATION" -ForegroundColor Blue
 
 $apiKey = Get-SecureSecret "API_KEY" "API key for authentication (32+ characters)" $envVars["API_KEY"]
 
-# Azure Storage Configuration
-Write-Host "`n☁️ AZURE STORAGE CONFIGURATION" -ForegroundColor Blue
+# Storage Provider Configuration
+Write-Host "`n☁️ STORAGE PROVIDER CONFIGURATION" -ForegroundColor Blue
 Write-Host "For permanent media hosting in Discord bot" -ForegroundColor Gray
 
-$storageAccountName = if ($envVars["AZURE_STORAGE_ACCOUNT_NAME"]) { 
-    $envVars["AZURE_STORAGE_ACCOUNT_NAME"]
+$storageProvider = if ($envVars["STORAGE_PROVIDER"]) { 
+    $envVars["STORAGE_PROVIDER"]
 } else { 
-    Read-Host "Azure Storage Account Name (existing account)" 
+    $defaultProvider = "linode"
+    $userInput = Read-Host "Storage Provider (azure/linode, default: $defaultProvider)"
+    if ([string]::IsNullOrWhiteSpace($userInput)) { $defaultProvider } else { $userInput }
 }
 
-$storageContainerName = if ($envVars["AZURE_STORAGE_CONTAINER_NAME"]) { 
-    $envVars["AZURE_STORAGE_CONTAINER_NAME"]
-} else { 
-    $defaultContainer = "discord-media"
-    $userInput = Read-Host "Storage Container Name (default: $defaultContainer)"
-    if ([string]::IsNullOrWhiteSpace($userInput)) { $defaultContainer } else { $userInput }
+# Azure Storage Configuration (if using Azure)
+if ($storageProvider -eq "azure") {
+    Write-Host "`n☁️ AZURE STORAGE CONFIGURATION" -ForegroundColor Blue
+    
+    $storageAccountName = if ($envVars["AZURE_STORAGE_ACCOUNT_NAME"]) { 
+        $envVars["AZURE_STORAGE_ACCOUNT_NAME"]
+    } else { 
+        Read-Host "Azure Storage Account Name (existing account)" 
+    }
+
+    $storageContainerName = if ($envVars["AZURE_STORAGE_CONTAINER_NAME"]) { 
+        $envVars["AZURE_STORAGE_CONTAINER_NAME"]
+    } else { 
+        $defaultContainer = "files"
+        $userInput = Read-Host "Storage Container Name (default: $defaultContainer)"
+        if ([string]::IsNullOrWhiteSpace($userInput)) { $defaultContainer } else { $userInput }
+    }
+}
+
+# Linode Object Storage Configuration (if using Linode)
+if ($storageProvider -eq "linode") {
+    Write-Host "`n🌐 LINODE OBJECT STORAGE CONFIGURATION" -ForegroundColor Blue
+    
+    $linodeAccessKey = Get-SecureSecret "LINODE_STORAGE_ACCESS_KEY_ID" "Linode Object Storage Access Key ID" $envVars["LINODE_STORAGE_ACCESS_KEY_ID"]
+    $linodeSecretKey = Get-SecureSecret "LINODE_STORAGE_SECRET_ACCESS_KEY" "Linode Object Storage Secret Access Key" $envVars["LINODE_STORAGE_SECRET_ACCESS_KEY"]
+    
+    $linodeBucket = if ($envVars["LINODE_STORAGE_BUCKET_NAME"]) { 
+        $envVars["LINODE_STORAGE_BUCKET_NAME"]
+    } else { 
+        Read-Host "Linode Storage Bucket Name (e.g., cdn.lqdev.tech)" 
+    }
+    
+    $linodeRegion = if ($envVars["LINODE_STORAGE_REGION"]) { 
+        $envVars["LINODE_STORAGE_REGION"]
+    } else { 
+        $defaultRegion = "us-ord-1"
+        $userInput = Read-Host "Linode Storage Region (default: $defaultRegion)"
+        if ([string]::IsNullOrWhiteSpace($userInput)) { $defaultRegion } else { $userInput }
+    }
+    
+    $linodeCustomDomain = if ($envVars["LINODE_STORAGE_CUSTOM_DOMAIN"]) { 
+        $envVars["LINODE_STORAGE_CUSTOM_DOMAIN"]
+    } else { 
+        Read-Host "Custom CDN Domain (e.g., https://cdn.lqdev.tech)" 
+    }
 }
 
 # Create secrets in Azure Container Apps
@@ -162,11 +213,45 @@ if ($githubRepo) {
 if ($apiKey) {
     $secretsToCreate += @{name="api-key"; value=$apiKey}
 }
-if ($storageAccountName) {
-    $secretsToCreate += @{name="azure-storage-account-name"; value=$storageAccountName}
+
+# Storage provider configuration
+if ($storageProvider) {
+    $secretsToCreate += @{name="storage-provider"; value=$storageProvider}
 }
-if ($storageContainerName) {
-    $secretsToCreate += @{name="azure-storage-container-name"; value=$storageContainerName}
+
+# Azure Storage secrets (if using Azure)
+if ($storageProvider -eq "azure") {
+    if ($storageAccountName) {
+        $secretsToCreate += @{name="azure-storage-account-name"; value=$storageAccountName}
+    }
+    if ($storageContainerName) {
+        $secretsToCreate += @{name="azure-storage-container-name"; value=$storageContainerName}
+    }
+}
+
+# Linode Object Storage secrets (if using Linode)
+if ($storageProvider -eq "linode") {
+    if ($linodeAccessKey) {
+        $secretsToCreate += @{name="linode-storage-access-key-id"; value=$linodeAccessKey}
+    }
+    if ($linodeSecretKey) {
+        $secretsToCreate += @{name="linode-storage-secret-access-key"; value=$linodeSecretKey}
+    }
+    if ($linodeBucket) {
+        $secretsToCreate += @{name="linode-storage-bucket-name"; value=$linodeBucket}
+    }
+    if ($linodeRegion) {
+        $secretsToCreate += @{name="linode-storage-region"; value=$linodeRegion}
+    }
+    if ($linodeCustomDomain) {
+        $secretsToCreate += @{name="linode-storage-custom-domain"; value=$linodeCustomDomain}
+    }
+    
+    # Add endpoint URL based on region
+    if ($linodeRegion) {
+        $linodeEndpointUrl = "https://$linodeRegion.linodeobjects.com"
+        $secretsToCreate += @{name="linode-storage-endpoint-url"; value=$linodeEndpointUrl}
+    }
 }
 
 foreach ($secret in $secretsToCreate) {

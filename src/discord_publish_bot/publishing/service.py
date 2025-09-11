@@ -284,12 +284,12 @@ class PublishingService:
 
     async def _process_media_uploads(self, post_data: PostData) -> PostData:
         """
-        Process media uploads to Azure Storage, replacing ephemeral Discord URLs with permanent ones.
+        Process media uploads to permanent storage, replacing ephemeral Discord URLs with permanent ones.
         
         This method:
         1. Detects Discord URLs in media_url and content
-        2. Uploads them to Azure Storage 
-        3. Replaces URLs with permanent Azure URLs
+        2. Uploads them to configured storage provider (Azure or Linode)
+        3. Replaces URLs with permanent storage URLs
         4. Returns updated PostData with permanent URLs
         
         Args:
@@ -299,29 +299,45 @@ class PublishingService:
             Updated post data with permanent URLs
         """
         try:
-            from ..storage import AzureStorageService
             from ..config import get_settings
             
             settings = get_settings()
             
-            # Skip processing if Azure Storage is not enabled
-            if not settings.azure_storage.enabled:
-                logger.info("Azure Storage not enabled, keeping original URLs")
+            # Check storage provider configuration
+            if settings.storage_provider == "azure":
+                if not settings.azure_storage.enabled:
+                    logger.info("Azure Storage not enabled, keeping original URLs")
+                    return post_data
+                
+                from ..storage import AzureStorageService
+                storage_service = AzureStorageService()
+                storage_type = "Azure Storage"
+                
+            elif settings.storage_provider == "linode":
+                if not settings.linode_storage.enabled:
+                    logger.info("Linode Storage not enabled, keeping original URLs") 
+                    return post_data
+                
+                from ..storage import LinodeStorageService
+                storage_service = LinodeStorageService()
+                storage_type = "Linode Object Storage"
+                
+            else:
+                logger.warning(f"Unknown storage provider: {settings.storage_provider}, keeping original URLs")
                 return post_data
             
             # Create a copy of post_data to modify
             updated_data = post_data.model_copy()
-            storage_service = AzureStorageService()
             
             # Process media_url if it's a Discord URL
             if updated_data.media_url and self._is_discord_url(updated_data.media_url):
-                logger.info(f"Uploading Discord media to Azure Storage: {updated_data.media_url}")
+                logger.info(f"Uploading Discord media to {storage_type}: {updated_data.media_url}")
                 
                 try:
                     # Extract filename from Discord URL
                     filename = self._extract_filename_from_discord_url(updated_data.media_url)
                     
-                    # Upload to Azure Storage
+                    # Upload to configured storage provider
                     permanent_url = await storage_service.upload_discord_attachment(
                         discord_url=updated_data.media_url,
                         filename=filename,
@@ -331,10 +347,10 @@ class PublishingService:
                     )
                     
                     updated_data.media_url = permanent_url
-                    logger.info(f"Successfully replaced Discord URL with Azure URL: {permanent_url}")
+                    logger.info(f"Successfully replaced Discord URL with {storage_type} URL: {permanent_url}")
                     
                 except Exception as e:
-                    logger.error(f"Failed to upload media to Azure Storage: {e}")
+                    logger.error(f"Failed to upload media to {storage_type}: {e}")
                     logger.warning("Keeping original Discord URL as fallback")
             
             # TODO: Process Discord URLs in content text as well (future enhancement)
