@@ -7,6 +7,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.7.0] - 2025-09-11 - 🎬 YOUTUBE POSTS ENHANCEMENT ✅
+
+### Added
+- **YouTube URL Detection**: Automatic detection of YouTube URLs in response posts
+  - Supports multiple YouTube URL formats: `youtube.com/watch?v=`, `youtu.be/`, `m.youtube.com`
+  - Extracts video IDs with proper validation and error handling
+  - Only processes valid 11-character YouTube video IDs
+
+- **Automatic YouTube Embed Generation**: Response posts with YouTube URLs now automatically include video embeds
+  - Uses exact format specified: `[![TITLE](http://img.youtube.com/vi/VIDEO_ID/0.jpg)](URL "TITLE")`
+  - Preserves original post content and appends embed
+  - Uses post title for embed alt text and tooltip
+  - Only enhances response posts (notes, media, bookmarks unchanged)
+
+### Enhanced
+- **Response Post Workflow**: YouTube videos can now be shared using existing `/post response` command
+  - Paste YouTube URL in Target URL field
+  - System automatically detects YouTube and adds embed markdown
+  - Supports all response types: reply, star (like), reshare (repost)
+  - Simple workflow - no new commands or complex configuration needed
+
+### Technical Implementation
+- **Core Utilities**: New YouTube utility functions in `src/discord_publish_bot/shared/utils.py`
+  - `extract_youtube_video_id()`: Robust video ID extraction from various URL formats
+  - `is_youtube_url()`: URL validation for YouTube domains
+  - `generate_youtube_embed()`: Markdown embed generation with user-provided titles
+  
+- **Publishing Service Enhancement**: Updated `src/discord_publish_bot/publishing/service.py`
+  - Enhanced `_build_markdown_content()` method with YouTube detection logic
+  - Automatic embed appending for response posts containing YouTube URLs
+  - Preserves existing functionality for all other post types
+  
+- **Comprehensive Testing**: Added test coverage for YouTube functionality
+  - Unit tests for URL detection, video ID extraction, and embed generation
+  - Integration tests for content enhancement pipeline
+  - Validation of edge cases and error handling
+
+### Deployment
+- **Production Deployment**: Successfully deployed to Azure Container Apps (2025-09-11 20:45 UTC)
+- **Revision**: Active and Running
+- **Health Status**: ✅ All services operational, Discord and GitHub integrations confirmed
+- **Environment**: Production Linode Object Storage configuration maintained
+- **Zero Downtime**: Seamless deployment with automatic traffic routing
+
+### User Experience
+- **Seamless Integration**: Works with existing `/post response` workflow
+- **Automatic Enhancement**: No configuration required - detects YouTube URLs and enhances automatically  
+- **Content Preservation**: Original user content always preserved, embed appended
+- **Format Consistency**: Generates embeds in exact user-specified format
+
+---
+
 ## [2.6.0] - 2025-09-11 - 🚀 LINODE OBJECT STORAGE - PHASE 4 PRODUCTION DEPLOYMENT COMPLETE
 
 ### Completed
