@@ -10,8 +10,12 @@ body:
 
         Share photos, videos, or audio files with optional commentary.
 
-        **To add media**: Drag and drop files directly into the **Content** field below.
-        GitHub will automatically upload and insert them as markdown.
+        **To add media**, choose any method:
+        - **Drag-and-drop** files directly into the Content field
+        - **Click "Attach files"** button at bottom of Content field
+        - **Paste** (Ctrl+V / Cmd+V) images from clipboard
+
+        All methods work! GitHub uploads automatically.
 
         **Supported formats**: JPG, PNG, GIF, WebP, SVG, MP4, MOV, WebM, MP3, WAV, FLAC, AAC, OGG
 
@@ -33,11 +37,14 @@ body:
 
         **Examples:**
         - Add commentary before/after media
-        - Drop multiple files
+        - Upload multiple files (any method)
         - Mix text and media freely
 
-        GitHub will insert: `![filename](https://github.com/user-attachments/...)`
-        Automation will convert this to `:::media` blocks with permanent CDN URLs.
+        GitHub will insert markdown or HTML:
+        - Drag-and-drop: `![filename](https://github.com/...)`
+        - Attach button: `<img src="https://github.com/..." />`
+
+        Automation converts both formats to `:::media` blocks with permanent CDN URLs.
       placeholder: |
         Write your content here...
 

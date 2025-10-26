@@ -181,16 +181,18 @@ class LinodeMediaUploader:
 
 def parse_markdown_for_attachments(markdown: str) -> List[MediaAttachment]:
     """
-    Extract all markdown images from issue body
-    Pattern: ![alt text](https://github.com/user-attachments/...)
+    Extract all media attachments from issue body
+    Supports both formats:
+    1. Markdown: ![alt text](https://github.com/user-attachments/...)
+    2. HTML: <img width="..." height="..." alt="..." src="https://github.com/..." />
     """
     attachments = []
 
-    # Regex to match markdown images/links
+    # Pattern 1: Markdown images/links
     # Matches: ![alt](url) or [alt](url) for videos/audio
-    pattern = r'!\[([^\]]*)\]\(([^)]+)\)|^\[([^\]]+)\]\(([^)]+)\)'
+    markdown_pattern = r'!\[([^\]]*)\]\(([^)]+)\)|^\[([^\]]+)\]\(([^)]+)\)'
 
-    for match in re.finditer(pattern, markdown, re.MULTILINE):
+    for match in re.finditer(markdown_pattern, markdown, re.MULTILINE):
         if match.group(1) is not None:  # Image syntax ![alt](url)
             alt_text = match.group(1)
             url = match.group(2)
@@ -211,14 +213,40 @@ def parse_markdown_for_attachments(markdown: str) -> List[MediaAttachment]:
                 filename=filename
             )
             attachments.append(attachment)
-            print(f"Found attachment: {filename} ({url})")
+            print(f"Found markdown attachment: {filename}")
+
+    # Pattern 2: HTML img tags (used when uploading via "Attach files" button)
+    # Matches: <img width="..." height="..." alt="..." src="url" />
+    html_img_pattern = r'<img\s+[^>]*src=["\']([^"\']+)["\'][^>]*/?>'
+
+    for match in re.finditer(html_img_pattern, markdown, re.IGNORECASE):
+        url = match.group(1)
+
+        # Only process GitHub-hosted attachments
+        if 'github.com' in url and ('user-attachments' in url or 'assets' in url):
+            # Extract alt text if present
+            alt_match = re.search(r'alt=["\']([^"\']*)["\']', match.group(0))
+            alt_text = alt_match.group(1) if alt_match else ''
+
+            # Extract filename from URL
+            filename = Path(urlparse(url).path).name
+            if not filename:
+                filename = 'attachment'
+
+            attachment = MediaAttachment(
+                alt_text=alt_text or filename,
+                github_url=url,
+                filename=filename
+            )
+            attachments.append(attachment)
+            print(f"Found HTML img attachment: {filename}")
 
     return attachments
 
 
 def transform_markdown_to_media_blocks(content: str, attachments: List[MediaAttachment]) -> str:
     """
-    Replace markdown ![alt](url) with :::media blocks
+    Replace markdown ![alt](url) and HTML <img> tags with :::media blocks
     From discord-publish-bot/publishing/service.py:_generate_media_block()
     """
     transformed = content
@@ -226,13 +254,6 @@ def transform_markdown_to_media_blocks(content: str, attachments: List[MediaAtta
     for attachment in attachments:
         if not attachment.permanent_url:
             continue
-
-        # Find original markdown pattern
-        # Match both ![alt](github-url) and [text](github-url)
-        patterns = [
-            f'![{re.escape(attachment.alt_text)}]({re.escape(attachment.github_url)})',
-            f'[{re.escape(attachment.alt_text)}]({re.escape(attachment.github_url)})'
-        ]
 
         # Create :::media block
         media_block = f''':::media
@@ -243,11 +264,31 @@ def transform_markdown_to_media_blocks(content: str, attachments: List[MediaAtta
   caption: "{attachment.alt_text}"
 :::media'''
 
-        # Replace first matching pattern
-        for pattern in patterns:
+        replaced = False
+
+        # Try to match markdown patterns first
+        # Match both ![alt](github-url) and [text](github-url)
+        markdown_patterns = [
+            f'![{re.escape(attachment.alt_text)}]({re.escape(attachment.github_url)})',
+            f'[{re.escape(attachment.alt_text)}]({re.escape(attachment.github_url)})'
+        ]
+
+        for pattern in markdown_patterns:
             if pattern in transformed:
                 transformed = transformed.replace(pattern, media_block, 1)
+                replaced = True
                 break
+
+        # If not found, try HTML img tag pattern
+        # Match: <img ... src="github-url" ... />
+        if not replaced:
+            # Build regex that matches img tag with this specific src URL
+            escaped_url = re.escape(attachment.github_url)
+            html_pattern = rf'<img\s+[^>]*src=["\']?{escaped_url}["\']?[^>]*/?>'
+
+            match = re.search(html_pattern, transformed, re.IGNORECASE)
+            if match:
+                transformed = transformed.replace(match.group(0), media_block, 1)
 
     return transformed
 

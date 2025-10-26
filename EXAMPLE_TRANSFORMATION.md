@@ -8,14 +8,44 @@ This shows exactly how your issue content gets transformed into the final markdo
 
 **Issue Title:** `[Media] Lossless audio coming to Spotify`
 
-**Content field:**
+**Content field (Method 1: Drag-and-drop):**
 ```markdown
 I guess people complained enough they're finally adding it
 
 ![screenshot.png](https://github.com/user-attachments/assets/abc123...)
 ```
 
+**Content field (Method 2: "Attach files" button):**
+```markdown
+I guess people complained enough they're finally adding it
+
+<img width="1080" height="872" alt="screenshot" src="https://github.com/user-attachments/assets/abc123..." />
+```
+
+**Both methods work!** The automation detects both markdown and HTML formats.
+
 **Tags field:** `music, spotify`
+
+---
+
+## Upload Methods Comparison
+
+### Method 1: Drag-and-Drop
+**How:** Drag files directly into the textarea
+**GitHub inserts:** `![filename.png](https://github.com/user-attachments/assets/...)`
+**Format:** Standard markdown
+
+### Method 2: "Attach files by dragging & dropping, selecting or pasting them" Button
+**How:** Click the button at bottom of textarea and select files
+**GitHub inserts:** `<img width="1080" height="872" alt="Image" src="https://github.com/user-attachments/assets/..." />`
+**Format:** HTML img tag with dimensions
+
+### Method 3: Paste from Clipboard
+**How:** Copy image and paste (Ctrl+V / Cmd+V)
+**GitHub inserts:** `![image](https://github.com/user-attachments/assets/...)`
+**Format:** Standard markdown
+
+**All three methods are supported!** The script automatically detects and processes both markdown and HTML formats.
 
 ---
 
@@ -53,6 +83,43 @@ I guess people complained enough they're finally adding it
 | Tags field `music, spotify` | `tags: ["music", "spotify"]` |
 | Markdown content | Preserved exactly as-is |
 | `![alt](github-url)` | `:::media` block with permanent CDN URL |
+
+---
+
+## Example: Using "Attach Files" Button (HTML Format)
+
+**Issue Content:**
+```markdown
+Trying to show formats
+
+<img width="1080" height="872" alt="Image" src="https://github.com/user-attachments/assets/d3b3bd8a-d721-4805-9a26-27e956a717af" />
+
+This works perfectly!
+```
+
+**Generated Output:**
+```markdown
+---
+title: Format Test
+post_type: media
+published_date: "2025-10-26 16:30 -05:00"
+tags: ["test"]
+---
+
+Trying to show formats
+
+:::media
+- url: "https://cdn.luisquintanilla.me/files/images/2025/10/26/d3b3bd8a-d721-4805-9a26-27e956a717af"
+  alt: "Image"
+  mediaType: "image"
+  aspectRatio: "landscape"
+  caption: "Format Test"
+:::media
+
+This works perfectly!
+```
+
+**Note:** The HTML `<img>` tag with width, height, and alt attributes gets cleanly converted to a `:::media` block.
 
 ---
 
