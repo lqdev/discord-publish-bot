@@ -1,0 +1,133 @@
+name: Process Media Issue
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  process-media:
+    # Only run for issues labeled 'media'
+    if: contains(github.event.issue.labels.*.name, 'media')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install boto3 requests
+
+      - name: Extract issue data
+        id: issue-data
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            // Parse issue body for structured data
+            const body = context.payload.issue.body || '';
+
+            // Extract title (from issue title, or parse from body)
+            const title = context.payload.issue.title;
+
+            // Simple parsing - look for common patterns in issue forms
+            const tagsMatch = body.match(/### Tags\s*\n\s*(.+)/i);
+            const tags = tagsMatch ? tagsMatch[1].trim() : '';
+
+            const issueData = {
+              number: context.issue.number,
+              title: title,
+              body: body,
+              tags: tags,
+              created_at: context.payload.issue.created_at,
+              author: context.payload.issue.user.login
+            };
+
+            // Write to file for Python script
+            fs.writeFileSync('issue_data.json', JSON.stringify(issueData, null, 2));
+
+            console.log('Issue data extracted:');
+            console.log(JSON.stringify(issueData, null, 2));
+
+      - name: Process media attachments
+        id: upload
+        env:
+          LINODE_ACCESS_KEY: ${{ secrets.LINODE_STORAGE_ACCESS_KEY_ID }}
+          LINODE_SECRET_KEY: ${{ secrets.LINODE_STORAGE_SECRET_ACCESS_KEY }}
+          LINODE_ENDPOINT: ${{ secrets.LINODE_STORAGE_ENDPOINT_URL }}
+          LINODE_BUCKET: ${{ secrets.LINODE_STORAGE_BUCKET_NAME }}
+          CUSTOM_DOMAIN: ${{ secrets.LINODE_STORAGE_CUSTOM_DOMAIN }}
+          BASE_PATH: files
+        run: |
+          python .github/scripts/upload_media.py --issue-json issue_data.json
+
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Add media post from issue #${{ github.event.issue.number }}"
+          branch: content/media/issue-${{ github.event.issue.number }}
+          delete-branch: true
+          title: "[Media] ${{ github.event.issue.title }}"
+          body: |
+            Auto-generated from issue #${{ github.event.issue.number }}
+
+            **Processing Summary:**
+            - Media files uploaded to permanent CDN storage
+            - Markdown transformed with :::media blocks
+            - Ready for review and merge
+
+            **Closes** #${{ github.event.issue.number }}
+          labels: |
+            content
+            media
+            automated
+          assignees: ${{ github.event.issue.user.login }}
+
+      - name: Comment on issue
+        if: steps.cpr.outputs.pull-request-number
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `✅ **Media processing complete!**
+
+              📦 Uploaded ${{ steps.upload.outputs.attachment_count }} file(s) to CDN
+              📝 Generated markdown: \`${{ steps.upload.outputs.markdown_file }}\`
+              🔗 Pull Request: #${{ steps.cpr.outputs.pull-request-number }}
+
+              Review and merge the PR to publish your media post!`
+            });
+
+      - name: Handle errors
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `❌ **Media processing failed**
+
+              Please check the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.
+
+              Common issues:
+              - Invalid file format
+              - Storage credentials not configured
+              - Network timeout during upload
+
+              You can edit this issue to retry.`
+            });

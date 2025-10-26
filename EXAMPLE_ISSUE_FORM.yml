@@ -1,0 +1,68 @@
+name: Media Post
+description: Create a media post with images, videos, or audio
+title: "[Media] "
+labels: ["content", "media"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Create a Media Post
+
+        Share photos, videos, or audio files. Simply drag and drop files into the **Content** field below!
+
+        **Supported formats**: JPG, PNG, GIF, WebP, MP4, MOV, WebM, MP3, WAV, FLAC
+
+  - type: input
+    id: title
+    attributes:
+      label: "Title"
+      description: "Post title"
+      placeholder: "Beautiful sunset at the beach"
+    validations:
+      required: true
+
+  - type: textarea
+    id: content
+    attributes:
+      label: "Content"
+      description: |
+        Post content and media files.
+
+        **To add media**: Drag and drop images/videos/audio directly here, or paste from clipboard.
+        GitHub will automatically upload them and insert markdown links.
+      placeholder: |
+        Here's a photo from my recent trip:
+
+        [Drag and drop files here]
+
+        The weather was amazing!
+      value: ""
+    validations:
+      required: true
+
+  - type: input
+    id: tags
+    attributes:
+      label: "Tags"
+      description: "Comma-separated tags"
+      placeholder: "photography, travel, indieweb"
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+
+        ### How it works:
+        1. When you drag files into the **Content** field above, GitHub uploads them automatically
+        2. You'll see markdown like: `![filename.jpg](https://github.com/user-attachments/...)`
+        3. Our automation will:
+           - Move files to permanent CDN storage
+           - Convert to custom `:::media` blocks
+           - Create a pull request for you to review
+        4. Merge the PR to publish!
+
+        ### Tips:
+        - **Multiple files**: Drag multiple files at once - they'll all be processed
+        - **Alt text**: Edit the `[alt text]` in the generated markdown for accessibility
+        - **Captions**: Your post title will be used as the media caption
+        - **Videos/Audio**: Work the same way as images!
