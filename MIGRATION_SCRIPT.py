@@ -155,9 +155,12 @@ class LinodeMediaUploader:
         media_type = self._detect_media_type(sanitized_filename, content_type)
         print(f"   Category: {media_folder} ({media_type})")
 
-        # Generate S3 key with date-based path
-        timestamp = datetime.now().strftime('%Y/%m/%d')
-        s3_key = f"{self.base_path}/{media_folder}/{timestamp}/{sanitized_filename}"
+        # Generate timestamp prefix to avoid conflicts (matches Discord bot)
+        timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+        timestamped_filename = f"{timestamp}_{sanitized_filename}"
+
+        # Generate S3 key (flat structure matching Discord bot)
+        s3_key = f"{self.base_path}/{media_folder}/{timestamped_filename}"
 
         # Upload to S3 with public-read ACL
         print(f"📤 Uploading to S3: {s3_key}")

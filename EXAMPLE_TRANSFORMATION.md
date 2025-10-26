@@ -64,7 +64,7 @@ tags: ["music", "spotify"]
 I guess people complained enough they're finally adding it
 
 :::media
-- url: "https://cdn.luisquintanilla.me/files/images/2025/10/26/screenshot.png"
+- url: "https://cdn.luisquintanilla.me/files/images/20251026_143052_screenshot.png"
   alt: "screenshot.png"
   mediaType: "image"
   aspectRatio: "landscape"
@@ -109,7 +109,7 @@ tags: ["test"]
 Trying to show formats
 
 :::media
-- url: "https://cdn.luisquintanilla.me/files/images/2025/10/26/d3b3bd8a-d721-4805-9a26-27e956a717af"
+- url: "https://cdn.luisquintanilla.me/files/images/20251026_163015_d3b3bd8a-d721-4805-9a26-27e956a717af"
   alt: "Image"
   mediaType: "image"
   aspectRatio: "landscape"
@@ -150,7 +150,7 @@ tags: ["photography", "travel"]
 Had an amazing day at the beach! Here are some highlights:
 
 :::media
-- url: "https://cdn.luisquintanilla.me/files/images/2025/10/26/sunset.jpg"
+- url: "https://cdn.luisquintanilla.me/files/images/20251026_154530_sunset.jpg"
   alt: "sunset.jpg"
   mediaType: "image"
   aspectRatio: "landscape"
@@ -160,7 +160,7 @@ Had an amazing day at the beach! Here are some highlights:
 The colors were incredible. Also recorded this moment:
 
 :::media
-- url: "https://cdn.luisquintanilla.me/files/videos/2025/10/26/waves.mp4"
+- url: "https://cdn.luisquintanilla.me/files/videos/20251026_154532_waves.mp4"
   alt: "waves.mp4"
   mediaType: "video"
   aspectRatio: "landscape"
@@ -207,22 +207,30 @@ Some key takeaways:
 
 ## Storage Organization
 
-Files are automatically organized by type and date:
+Files are automatically organized by type with timestamp prefixes (matches Discord bot structure):
 
 ```
 cdn.luisquintanilla.me/
 └── files/
     ├── images/
-    │   └── 2025/10/26/
-    │       ├── sunset.jpg
-    │       └── screenshot.png
+    │   ├── 20251026_143052_sunset.jpg
+    │   ├── 20251026_154530_screenshot.png
+    │   └── 20251027_091245_photo.jpg
     ├── videos/
-    │   └── 2025/10/26/
-    │       └── waves.mp4
+    │   ├── 20251026_154532_waves.mp4
+    │   └── 20251026_160045_recording.mp4
     └── audio/
-        └── 2025/10/26/
-            └── podcast-clip.mp3
+        ├── 20251026_120000_podcast-clip.mp3
+        └── 20251027_083000_interview.mp3
 ```
+
+**Format:** `{media_type}/{YYYYMMDD_HHMMSS}_{filename}`
+
+**Benefits:**
+- ✅ Consistent with Discord bot uploads
+- ✅ Timestamp prefix prevents filename conflicts
+- ✅ Chronological sorting within each media type
+- ✅ Simple flat structure
 
 ---
 
@@ -318,7 +326,7 @@ tags: ["music", "spotify"]
 I guess people complained enough they're finally adding it
 
 :::media
-- url: "https://cdn.luisquintanilla.me/files/images/2025/09/13/Pasted_image_20250913091632.png"
+- url: "https://cdn.luisquintanilla.me/files/images/20250913_091632_Pasted_image_20250913091632.png"
   alt: "Pasted image 20250913091632.png"
   mediaType: "image"
   aspectRatio: "landscape"
