@@ -19,8 +19,9 @@ body:
         All methods work! GitHub uploads automatically, external URLs stay as-is.
 
         **Supported formats**:
-        - Uploads: JPG, PNG, GIF, WebP, SVG, MP4, MOV, WebM, MP3, WAV, FLAC, AAC, OGG
-        - External: YouTube, Vimeo, SoundCloud, any public image/video/audio URL
+        - **Uploads**: JPG, PNG, GIF, WebP, SVG, MP4, MOV, WebM, MP3, WAV, FLAC, AAC, OGG
+        - **Direct URLs**: Any direct file URL (https://example.com/image.jpg, video.mp4, etc.)
+        - **Platform embeds**: YouTube (gets special thumbnail format), Vimeo, SoundCloud
 
   - type: input
     id: title

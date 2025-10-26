@@ -22,11 +22,13 @@ class MediaAttachment:
     """Represents a media file extracted from issue markdown"""
     def __init__(self, alt_text: str, url: str, filename: str, is_external: bool = False):
         self.alt_text = alt_text
-        self.url = url  # Original URL (GitHub or external)
+        self.url = url  # Original URL (GitHub, direct file, or platform)
         self.filename = filename
         self.is_external = is_external  # True if external URL, False if GitHub upload
+        self.is_platform_embed = False  # True for YouTube/Vimeo/etc (needs special handling)
         self.permanent_url: Optional[str] = None
         self.media_type: Optional[str] = None
+        self.video_id: Optional[str] = None  # For YouTube/platform embeds
 
 class LinodeMediaUploader:
     """Simplified version of LinodeStorageService from discord-publish-bot"""
@@ -269,28 +271,44 @@ def parse_markdown_for_attachments(markdown: str) -> List[MediaAttachment]:
 
 def transform_markdown_to_media_blocks(content: str, attachments: List[MediaAttachment]) -> str:
     """
-    Replace markdown ![alt](url) and HTML <img> tags with :::media blocks
-    Works with both GitHub uploads and external URLs
+    Replace markdown ![alt](url) and HTML <img> tags with appropriate format:
+    - Platform embeds (YouTube, etc.): Clickable thumbnail format
+    - Direct media URLs: :::media blocks
+    - GitHub uploads: :::media blocks with S3 URLs
     """
     transformed = content
 
     for attachment in attachments:
-        # Use permanent_url if available (uploaded to S3), otherwise use original URL (external)
-        final_url = attachment.permanent_url if attachment.permanent_url else attachment.url
+        replaced = False
 
-        if not final_url:
-            continue
+        # Determine what format to use
+        if attachment.is_platform_embed:
+            # Platform embed (YouTube, Vimeo, etc.) - use thumbnail format
+            if attachment.video_id:
+                # YouTube - generate clickable thumbnail
+                # Format: [![Title](http://img.youtube.com/vi/VIDEO_ID/0.jpg)](https://youtu.be/VIDEO_ID "Title")
+                thumbnail_url = f"http://img.youtube.com/vi/{attachment.video_id}/0.jpg"
+                video_url = attachment.url  # Use original URL (preserves query params)
+                media_block = f'[![{attachment.alt_text}]({thumbnail_url})]({video_url} "{attachment.alt_text}")'
+            else:
+                # Other platforms - for now, keep original markdown (can be enhanced later)
+                # Just skip transformation for non-YouTube platforms
+                continue
 
-        # Create :::media block
-        media_block = f''':::media
+        else:
+            # Direct media file or GitHub upload - use :::media blocks
+            final_url = attachment.permanent_url if attachment.permanent_url else attachment.url
+
+            if not final_url:
+                continue
+
+            media_block = f''':::media
 - url: "{final_url}"
   alt: "{attachment.alt_text}"
   mediaType: "{attachment.media_type}"
   aspectRatio: "landscape"
   caption: "{attachment.alt_text}"
 :::media'''
-
-        replaced = False
 
         # Try to match markdown patterns first
         # Match both ![alt](url) and [text](url)
@@ -361,6 +379,47 @@ tags: {json.dumps(tags) if tags else '[]'}
     print(f"📝 Generated: {filename}")
 
     return filename
+
+
+def _is_platform_embed_url(url: str) -> bool:
+    """
+    Check if URL is a platform embed (YouTube, Vimeo, etc.) vs direct media file
+    Platform embeds need special handling (thumbnail format) since we can't use <video src="...">
+    """
+    url_lower = url.lower()
+
+    # Video platforms that require embed handling
+    video_platforms = ['youtube.com', 'youtu.be', 'vimeo.com', 'dailymotion.com']
+
+    # Audio platforms that require embed handling
+    audio_platforms = ['soundcloud.com', 'spotify.com', 'music.apple.com']
+
+    # Check if it's a platform URL
+    for platform in video_platforms + audio_platforms:
+        if platform in url_lower:
+            return True
+
+    return False
+
+
+def _extract_youtube_video_id(url: str) -> Optional[str]:
+    """
+    Extract video ID from YouTube URL
+    Supports: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID
+    """
+    import re
+
+    patterns = [
+        r'(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})',
+        r'youtube\.com\/.*[?&]v=([a-zA-Z0-9_-]{11})'
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, url)
+        if match:
+            return match.group(1)
+
+    return None
 
 
 def _detect_media_type_from_url(url: str) -> str:
@@ -457,13 +516,31 @@ def main():
 
     if external_urls:
         print(f"\n🔗 Processing {len(external_urls)} external URL(s)...")
-        # For external URLs, just detect media type and use the URL as-is
+
         for attachment in external_urls:
-            # Detect media type from URL
-            attachment.media_type = _detect_media_type_from_url(attachment.url)
-            # External URLs don't need permanent_url - we'll use original URL
-            attachment.permanent_url = None
-            print(f"   ✓ {attachment.url[:60]}{'...' if len(attachment.url) > 60 else ''} → {attachment.media_type}")
+            # Check if this is a platform embed (YouTube, Vimeo, etc.)
+            attachment.is_platform_embed = _is_platform_embed_url(attachment.url)
+
+            if attachment.is_platform_embed:
+                # Platform embed - needs special thumbnail format
+                # Extract video ID if it's YouTube
+                if 'youtube.com' in attachment.url.lower() or 'youtu.be' in attachment.url.lower():
+                    attachment.video_id = _extract_youtube_video_id(attachment.url)
+                    attachment.media_type = 'video'
+                    print(f"   📺 YouTube: {attachment.video_id} (thumbnail format)")
+                else:
+                    # Other platforms (Vimeo, SoundCloud, etc.)
+                    attachment.media_type = _detect_media_type_from_url(attachment.url)
+                    print(f"   🎬 Platform: {attachment.url[:50]}... ({attachment.media_type}, special handling)")
+
+                # Platform URLs stay as-is (no upload)
+                attachment.permanent_url = None
+
+            else:
+                # Direct media file URL - can use :::media blocks
+                attachment.media_type = _detect_media_type_from_url(attachment.url)
+                attachment.permanent_url = None
+                print(f"   ✓ Direct URL: {attachment.url[:50]}... → {attachment.media_type} (:::media block)")
 
     # Transform markdown
     print("🔄 Transforming markdown to :::media blocks...")

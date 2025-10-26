@@ -86,59 +86,86 @@ I guess people complained enough they're finally adding it
 
 ---
 
-## Example: External URLs (No Upload)
+## Example: YouTube Videos (Special Handling)
 
 **Issue Content:**
 ```markdown
-Check out this amazing tutorial!
+Check out this tutorial video:
 
-![Python Tutorial](https://example.com/images/python-tutorial.jpg)
-
-And here's a video explanation:
-
-![Demo Video](https://youtube.com/watch?v=abc123)
+![Python Tutorial](https://youtube.com/watch?v=Q-iZMkvHnFw)
 ```
 
 **Generated Output:**
 ```markdown
 ---
-title: External Resources
+title: Python Tutorial
 post_type: media
 published_date: "2025-10-26 17:00 -05:00"
 tags: ["tutorial", "python"]
 ---
 
-Check out this amazing tutorial!
+Check out this tutorial video:
+
+[![Python Tutorial](http://img.youtube.com/vi/Q-iZMkvHnFw/0.jpg)](https://youtube.com/watch?v=Q-iZMkvHnFw "Python Tutorial")
+```
+
+**Note:** YouTube URLs get **special thumbnail format** (NOT `:::media` blocks) because you can't use `<video src="youtube-url">` - it doesn't work! The clickable thumbnail format provides a visual preview that links to the video.
+
+**Why the difference?**
+- ✅ **GitHub uploads**: Direct file access → `<img>`, `<video>`, `<audio>` tags work → Use `:::media` blocks
+- ✅ **Direct file URLs** (e.g., `https://cdn.example.com/video.mp4`): Direct file → Use `:::media` blocks
+- ⚠️ **YouTube/platform URLs**: No direct file access → Can't use `<video>` tag → Use thumbnail format
+
+---
+
+## Example: Direct Media URLs (:::media blocks)
+
+**Issue Content:**
+```markdown
+Check out this hosted image:
+
+![Architecture Diagram](https://example.com/images/architecture.jpg)
+
+And a direct video file:
+
+![Demo](https://cdn.example.com/videos/demo.mp4)
+```
+
+**Generated Output:**
+```markdown
+---
+title: External Media
+post_type: media
+published_date: "2025-10-26 17:00 -05:00"
+tags: ["documentation"]
+---
+
+Check out this hosted image:
 
 :::media
-- url: "https://example.com/images/python-tutorial.jpg"
-  alt: "Python Tutorial"
+- url: "https://example.com/images/architecture.jpg"
+  alt: "Architecture Diagram"
   mediaType: "image"
   aspectRatio: "landscape"
-  caption: "Python Tutorial"
+  caption: "Architecture Diagram"
 :::media
 
-And here's a video explanation:
+And a direct video file:
 
 :::media
-- url: "https://youtube.com/watch?v=abc123"
-  alt: "Demo Video"
+- url: "https://cdn.example.com/videos/demo.mp4"
+  alt: "Demo"
   mediaType: "video"
   aspectRatio: "landscape"
-  caption: "Demo Video"
+  caption: "Demo"
 :::media
 ```
 
-**Note:** External URLs are NOT uploaded to S3 - they remain as-is in the :::media block. Perfect for:
-- YouTube/Vimeo videos
-- Images hosted on your own CDN
-- SoundCloud/Spotify audio
-- Any media that's already publicly accessible
+**Note:** Direct file URLs (with extensions like `.jpg`, `.mp4`) use `:::media` blocks because they can be used directly in HTML tags like `<img src="...">` or `<video src="...">`
 
-**Supported external platforms:**
-- **Video**: YouTube, Vimeo, Dailymotion, any direct video URLs
-- **Audio**: SoundCloud, Spotify, Apple Music, any direct audio URLs
-- **Images**: Any publicly accessible image URL
+**Supported formats:**
+- **Direct URLs**: Any URL ending in media extension (.jpg, .png, .mp4, .webm, .mp3, etc.)
+- **Platform embeds**: YouTube (thumbnail format), Vimeo, SoundCloud (special handling)
 
 ---
 
@@ -179,7 +206,7 @@ This works perfectly!
 
 ---
 
-## Example: Mixed (GitHub Upload + External URL)
+## Example: Mixed (GitHub Upload + YouTube + Direct URL)
 
 **Issue Content:**
 ```markdown
@@ -187,9 +214,13 @@ Here's my photo from today:
 
 [Drag and drop photo → GitHub inserts: ![sunset.jpg](https://github.com/user-attachments/assets/xyz789...)]
 
-And here's the location on Google Maps:
+Tutorial video I found helpful:
 
-![Map](https://maps.googleapis.com/maps/api/staticmap?center=...)
+![Tutorial](https://youtube.com/watch?v=abc123)
+
+And a diagram from another site:
+
+![Architecture](https://cdn.example.com/diagram.png)
 ```
 
 **Generated Output:**
@@ -198,7 +229,7 @@ And here's the location on Google Maps:
 title: Mixed Media Post
 post_type: media
 published_date: "2025-10-26 17:15 -05:00"
-tags: ["photography", "travel"]
+tags: ["photography", "tutorial"]
 ---
 
 Here's my photo from today:
@@ -211,20 +242,25 @@ Here's my photo from today:
   caption: "Mixed Media Post"
 :::media
 
-And here's the location on Google Maps:
+Tutorial video I found helpful:
+
+[![Tutorial](http://img.youtube.com/vi/abc123/0.jpg)](https://youtube.com/watch?v=abc123 "Tutorial")
+
+And a diagram from another site:
 
 :::media
-- url: "https://maps.googleapis.com/maps/api/staticmap?center=..."
-  alt: "Map"
+- url: "https://cdn.example.com/diagram.png"
+  alt: "Architecture"
   mediaType: "image"
   aspectRatio: "landscape"
-  caption: "Map"
+  caption: "Architecture"
 :::media
 ```
 
 **What happened:**
-- ✅ GitHub upload (`sunset.jpg`) → Uploaded to S3 → Permanent CDN URL
-- ✅ External URL (Google Maps) → Kept as-is → No upload needed
+- ✅ GitHub upload (`sunset.jpg`) → Uploaded to S3 → `:::media` block with CDN URL
+- ✅ YouTube URL → Thumbnail format (can't use `<video>` tag)
+- ✅ Direct file URL (`.png`) → `:::media` block (can use `<img>` tag)
 
 ---
 
