@@ -32,20 +32,25 @@ jobs:
           script: |
             const fs = require('fs');
 
-            // Parse issue body for structured data
+            // Parse issue body for structured data from issue form
             const body = context.payload.issue.body || '';
+            const issueTitle = context.payload.issue.title;
 
-            // Extract title (from issue title, or parse from body)
-            const title = context.payload.issue.title;
+            // Extract title (remove [Media] prefix if present)
+            const title = issueTitle.replace(/^\[Media\]\s*/i, '').trim();
 
-            // Simple parsing - look for common patterns in issue forms
+            // Parse content section (everything between ### Content and next ### or end)
+            const contentMatch = body.match(/### Content\s*\n\s*([\s\S]*?)(?=\n### |$)/i);
+            const content = contentMatch ? contentMatch[1].trim() : body;
+
+            // Parse tags section
             const tagsMatch = body.match(/### Tags\s*\n\s*(.+)/i);
             const tags = tagsMatch ? tagsMatch[1].trim() : '';
 
             const issueData = {
               number: context.issue.number,
               title: title,
-              body: body,
+              body: content,  // Use parsed content section, not full body
               tags: tags,
               created_at: context.payload.issue.created_at,
               author: context.payload.issue.user.login
@@ -56,6 +61,8 @@ jobs:
 
             console.log('Issue data extracted:');
             console.log(JSON.stringify(issueData, null, 2));
+            console.log('\n--- Content Preview ---');
+            console.log(content.substring(0, 500));
 
       - name: Process media attachments
         id: upload

@@ -8,16 +8,19 @@ body:
       value: |
         ## Create a Media Post
 
-        Share photos, videos, or audio files. Simply drag and drop files into the **Content** field below!
+        Share photos, videos, or audio files with optional commentary.
 
-        **Supported formats**: JPG, PNG, GIF, WebP, MP4, MOV, WebM, MP3, WAV, FLAC
+        **To add media**: Drag and drop files directly into the **Content** field below.
+        GitHub will automatically upload and insert them as markdown.
+
+        **Supported formats**: JPG, PNG, GIF, WebP, SVG, MP4, MOV, WebM, MP3, WAV, FLAC, AAC, OGG
 
   - type: input
     id: title
     attributes:
       label: "Title"
-      description: "Post title"
-      placeholder: "Beautiful sunset at the beach"
+      description: "Post title (required)"
+      placeholder: "Lossless audio coming to Spotify"
     validations:
       required: true
 
@@ -26,16 +29,21 @@ body:
     attributes:
       label: "Content"
       description: |
-        Post content and media files.
+        Write your post content in markdown. Drag and drop media files anywhere in the text.
 
-        **To add media**: Drag and drop images/videos/audio directly here, or paste from clipboard.
-        GitHub will automatically upload them and insert markdown links.
+        **Examples:**
+        - Add commentary before/after media
+        - Drop multiple files
+        - Mix text and media freely
+
+        GitHub will insert: `![filename](https://github.com/user-attachments/...)`
+        Automation will convert this to `:::media` blocks with permanent CDN URLs.
       placeholder: |
-        Here's a photo from my recent trip:
+        Write your content here...
 
-        [Drag and drop files here]
+        [Drag and drop images/videos/audio anywhere in this text]
 
-        The weather was amazing!
+        You can add more text after the media too!
       value: ""
     validations:
       required: true
@@ -44,25 +52,23 @@ body:
     id: tags
     attributes:
       label: "Tags"
-      description: "Comma-separated tags"
-      placeholder: "photography, travel, indieweb"
+      description: "Comma-separated tags (e.g., music, spotify, news)"
+      placeholder: "music, spotify"
 
   - type: markdown
     attributes:
       value: |
         ---
 
-        ### How it works:
-        1. When you drag files into the **Content** field above, GitHub uploads them automatically
-        2. You'll see markdown like: `![filename.jpg](https://github.com/user-attachments/...)`
-        3. Our automation will:
-           - Move files to permanent CDN storage
-           - Convert to custom `:::media` blocks
-           - Create a pull request for you to review
-        4. Merge the PR to publish!
+        ### What happens next:
+        1. GitHub uploads your dragged files and inserts markdown: `![file](url)`
+        2. Automation downloads files and uploads to permanent CDN storage
+        3. Markdown is transformed to `:::media` blocks with CDN URLs
+        4. Pull request is created automatically with formatted content
+        5. Review and merge the PR to publish!
 
         ### Tips:
-        - **Multiple files**: Drag multiple files at once - they'll all be processed
-        - **Alt text**: Edit the `[alt text]` in the generated markdown for accessibility
-        - **Captions**: Your post title will be used as the media caption
-        - **Videos/Audio**: Work the same way as images!
+        - **Markdown supported**: Use headings, lists, bold, italics, etc.
+        - **Multiple files**: Drop as many as you need
+        - **Alt text**: Edit `![alt text here](url)` for accessibility
+        - **Mixed content**: Text + media works perfectly together

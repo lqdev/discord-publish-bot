@@ -255,22 +255,31 @@ def transform_markdown_to_media_blocks(content: str, attachments: List[MediaAtta
 def generate_markdown_file(issue_data: dict, transformed_content: str) -> str:
     """
     Generate final markdown file with frontmatter
-    From discord-publish-bot/publishing/service.py
+    Matches luisquintanilla.me format exactly
     """
     title = issue_data.get('title', '').replace('[Media] ', '').strip()
     tags_str = issue_data.get('tags', '')
     tags = [t.strip() for t in tags_str.split(',') if t.strip()] if tags_str else []
 
-    date = datetime.now()
+    # Use current datetime with timezone
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc).astimezone()
+
+    # Format: "2025-09-13 09:16 -05:00"
+    published_date = now.strftime("%Y-%m-%d %H:%M %z")
+    # Add colon in timezone offset (Python doesn't do this automatically)
+    published_date = published_date[:-2] + ':' + published_date[-2:]
+
     slug = re.sub(r'[^a-z0-9]+', '-', title.lower()).strip('-')[:50]
 
-    # Generate filename
-    filename = f"_src/media/{date.year:04d}-{date.month:02d}-{date.day:02d}-{slug}.md"
+    # Generate filename (matches existing pattern)
+    filename = f"_src/media/{slug}.md"
 
-    # Build frontmatter (YAML)
+    # Build frontmatter (YAML) - matches luisquintanilla.me format exactly
     frontmatter = f"""---
-title: "{title}"
-date: {date.isoformat()}
+title: {title}
+post_type: media
+published_date: "{published_date}"
 tags: {json.dumps(tags) if tags else '[]'}
 ---
 
@@ -311,8 +320,22 @@ def main():
     attachments = parse_markdown_for_attachments(content)
 
     if not attachments:
-        print("⚠️  No GitHub-hosted attachments found")
-        print("   Users can drag-and-drop files into issue textarea")
+        print("⚠️  No GitHub-hosted attachments found in content")
+        print("   Content will be preserved as-is without media transformations")
+        print("   Note: You can drag-and-drop files into the issue to add media")
+        # Still generate markdown file with the content
+        markdown_file = generate_markdown_file(issue_data, content)
+        print()
+        print("=" * 60)
+        print("✅ Processing complete (text-only post)")
+        print(f"   File: {markdown_file}")
+        print("=" * 60)
+
+        # Output for GitHub Actions
+        if os.getenv('GITHUB_OUTPUT'):
+            with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                f.write(f"markdown_file={markdown_file}\n")
+                f.write(f"attachment_count=0\n")
         return
 
     print(f"📎 Found {len(attachments)} attachment(s)\n")
