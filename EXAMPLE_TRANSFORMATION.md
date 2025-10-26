@@ -86,6 +86,62 @@ I guess people complained enough they're finally adding it
 
 ---
 
+## Example: External URLs (No Upload)
+
+**Issue Content:**
+```markdown
+Check out this amazing tutorial!
+
+![Python Tutorial](https://example.com/images/python-tutorial.jpg)
+
+And here's a video explanation:
+
+![Demo Video](https://youtube.com/watch?v=abc123)
+```
+
+**Generated Output:**
+```markdown
+---
+title: External Resources
+post_type: media
+published_date: "2025-10-26 17:00 -05:00"
+tags: ["tutorial", "python"]
+---
+
+Check out this amazing tutorial!
+
+:::media
+- url: "https://example.com/images/python-tutorial.jpg"
+  alt: "Python Tutorial"
+  mediaType: "image"
+  aspectRatio: "landscape"
+  caption: "Python Tutorial"
+:::media
+
+And here's a video explanation:
+
+:::media
+- url: "https://youtube.com/watch?v=abc123"
+  alt: "Demo Video"
+  mediaType: "video"
+  aspectRatio: "landscape"
+  caption: "Demo Video"
+:::media
+```
+
+**Note:** External URLs are NOT uploaded to S3 - they remain as-is in the :::media block. Perfect for:
+- YouTube/Vimeo videos
+- Images hosted on your own CDN
+- SoundCloud/Spotify audio
+- Any media that's already publicly accessible
+
+**Supported external platforms:**
+- **Video**: YouTube, Vimeo, Dailymotion, any direct video URLs
+- **Audio**: SoundCloud, Spotify, Apple Music, any direct audio URLs
+- **Images**: Any publicly accessible image URL
+
+---
+
 ## Example: Using "Attach Files" Button (HTML Format)
 
 **Issue Content:**
@@ -120,6 +176,55 @@ This works perfectly!
 ```
 
 **Note:** The HTML `<img>` tag with width, height, and alt attributes gets cleanly converted to a `:::media` block.
+
+---
+
+## Example: Mixed (GitHub Upload + External URL)
+
+**Issue Content:**
+```markdown
+Here's my photo from today:
+
+[Drag and drop photo → GitHub inserts: ![sunset.jpg](https://github.com/user-attachments/assets/xyz789...)]
+
+And here's the location on Google Maps:
+
+![Map](https://maps.googleapis.com/maps/api/staticmap?center=...)
+```
+
+**Generated Output:**
+```markdown
+---
+title: Mixed Media Post
+post_type: media
+published_date: "2025-10-26 17:15 -05:00"
+tags: ["photography", "travel"]
+---
+
+Here's my photo from today:
+
+:::media
+- url: "https://cdn.luisquintanilla.me/files/images/20251026_171500_sunset.jpg"
+  alt: "sunset.jpg"
+  mediaType: "image"
+  aspectRatio: "landscape"
+  caption: "Mixed Media Post"
+:::media
+
+And here's the location on Google Maps:
+
+:::media
+- url: "https://maps.googleapis.com/maps/api/staticmap?center=..."
+  alt: "Map"
+  mediaType: "image"
+  aspectRatio: "landscape"
+  caption: "Map"
+:::media
+```
+
+**What happened:**
+- ✅ GitHub upload (`sunset.jpg`) → Uploaded to S3 → Permanent CDN URL
+- ✅ External URL (Google Maps) → Kept as-is → No upload needed
 
 ---
 

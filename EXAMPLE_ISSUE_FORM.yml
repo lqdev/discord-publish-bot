@@ -14,10 +14,13 @@ body:
         - **Drag-and-drop** files directly into the Content field
         - **Click "Attach files"** button at bottom of Content field
         - **Paste** (Ctrl+V / Cmd+V) images from clipboard
+        - **Type URLs** for external media (YouTube, hosted images, etc.)
 
-        All methods work! GitHub uploads automatically.
+        All methods work! GitHub uploads automatically, external URLs stay as-is.
 
-        **Supported formats**: JPG, PNG, GIF, WebP, SVG, MP4, MOV, WebM, MP3, WAV, FLAC, AAC, OGG
+        **Supported formats**:
+        - Uploads: JPG, PNG, GIF, WebP, SVG, MP4, MOV, WebM, MP3, WAV, FLAC, AAC, OGG
+        - External: YouTube, Vimeo, SoundCloud, any public image/video/audio URL
 
   - type: input
     id: title
@@ -79,3 +82,5 @@ body:
         - **Multiple files**: Drop as many as you need
         - **Alt text**: Edit `![alt text here](url)` for accessibility
         - **Mixed content**: Text + media works perfectly together
+        - **External URLs**: Paste YouTube, Vimeo, or image URLs directly - no upload needed!
+        - **Mix uploads & external**: You can combine GitHub uploads with external URLs in the same post

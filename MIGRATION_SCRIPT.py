@@ -20,10 +20,11 @@ from urllib.parse import urlparse
 
 class MediaAttachment:
     """Represents a media file extracted from issue markdown"""
-    def __init__(self, alt_text: str, github_url: str, filename: str):
+    def __init__(self, alt_text: str, url: str, filename: str, is_external: bool = False):
         self.alt_text = alt_text
-        self.github_url = github_url
+        self.url = url  # Original URL (GitHub or external)
         self.filename = filename
+        self.is_external = is_external  # True if external URL, False if GitHub upload
         self.permanent_url: Optional[str] = None
         self.media_type: Optional[str] = None
 
@@ -185,64 +186,83 @@ class LinodeMediaUploader:
 def parse_markdown_for_attachments(markdown: str) -> List[MediaAttachment]:
     """
     Extract all media attachments from issue body
-    Supports both formats:
-    1. Markdown: ![alt text](https://github.com/user-attachments/...)
-    2. HTML: <img width="..." height="..." alt="..." src="https://github.com/..." />
+    Supports:
+    1. Markdown: ![alt text](url)
+    2. HTML: <img src="url" />
+    3. Both GitHub uploads and external URLs (YouTube, images hosted elsewhere, etc.)
     """
     attachments = []
 
     # Pattern 1: Markdown images/links
     # Matches: ![alt](url) or [alt](url) for videos/audio
-    markdown_pattern = r'!\[([^\]]*)\]\(([^)]+)\)|^\[([^\]]+)\]\(([^)]+)\)'
+    markdown_pattern = r'!\[([^\]]*)\]\(([^)]+)\)'
 
     for match in re.finditer(markdown_pattern, markdown, re.MULTILINE):
-        if match.group(1) is not None:  # Image syntax ![alt](url)
-            alt_text = match.group(1)
-            url = match.group(2)
-        else:  # Link syntax [text](url)
-            alt_text = match.group(3)
-            url = match.group(4)
+        alt_text = match.group(1)
+        url = match.group(2).strip()
 
-        # Only process GitHub-hosted attachments
-        if 'github.com' in url and ('user-attachments' in url or 'assets' in url):
-            # Extract filename from URL
-            filename = Path(urlparse(url).path).name
-            if not filename:
-                filename = 'attachment'
+        # Skip if it's a relative path or anchor link
+        if not url.startswith('http'):
+            continue
 
-            attachment = MediaAttachment(
-                alt_text=alt_text or filename,
-                github_url=url,
-                filename=filename
-            )
-            attachments.append(attachment)
-            print(f"Found markdown attachment: {filename}")
+        # Determine if this is a GitHub upload or external URL
+        is_github = 'github.com' in url and ('user-attachments' in url or 'assets' in url)
+        is_external = not is_github
+
+        # Extract filename from URL
+        filename = Path(urlparse(url).path).name
+        if not filename or filename == '':
+            filename = 'external-media' if is_external else 'attachment'
+
+        attachment = MediaAttachment(
+            alt_text=alt_text or filename,
+            url=url,
+            filename=filename,
+            is_external=is_external
+        )
+        attachments.append(attachment)
+
+        if is_external:
+            print(f"Found external URL: {url[:60]}{'...' if len(url) > 60 else ''}")
+        else:
+            print(f"Found GitHub upload: {filename}")
 
     # Pattern 2: HTML img tags (used when uploading via "Attach files" button)
     # Matches: <img width="..." height="..." alt="..." src="url" />
     html_img_pattern = r'<img\s+[^>]*src=["\']([^"\']+)["\'][^>]*/?>'
 
     for match in re.finditer(html_img_pattern, markdown, re.IGNORECASE):
-        url = match.group(1)
+        url = match.group(1).strip()
 
-        # Only process GitHub-hosted attachments
-        if 'github.com' in url and ('user-attachments' in url or 'assets' in url):
-            # Extract alt text if present
-            alt_match = re.search(r'alt=["\']([^"\']*)["\']', match.group(0))
-            alt_text = alt_match.group(1) if alt_match else ''
+        # Skip if it's a relative path
+        if not url.startswith('http'):
+            continue
 
-            # Extract filename from URL
-            filename = Path(urlparse(url).path).name
-            if not filename:
-                filename = 'attachment'
+        # Determine if this is a GitHub upload or external URL
+        is_github = 'github.com' in url and ('user-attachments' in url or 'assets' in url)
+        is_external = not is_github
 
-            attachment = MediaAttachment(
-                alt_text=alt_text or filename,
-                github_url=url,
-                filename=filename
-            )
-            attachments.append(attachment)
-            print(f"Found HTML img attachment: {filename}")
+        # Extract alt text if present
+        alt_match = re.search(r'alt=["\']([^"\']*)["\']', match.group(0))
+        alt_text = alt_match.group(1) if alt_match else ''
+
+        # Extract filename from URL
+        filename = Path(urlparse(url).path).name
+        if not filename or filename == '':
+            filename = 'external-media' if is_external else 'attachment'
+
+        attachment = MediaAttachment(
+            alt_text=alt_text or filename,
+            url=url,
+            filename=filename,
+            is_external=is_external
+        )
+        attachments.append(attachment)
+
+        if is_external:
+            print(f"Found external HTML img: {url[:60]}{'...' if len(url) > 60 else ''}")
+        else:
+            print(f"Found GitHub HTML upload: {filename}")
 
     return attachments
 
@@ -250,17 +270,20 @@ def parse_markdown_for_attachments(markdown: str) -> List[MediaAttachment]:
 def transform_markdown_to_media_blocks(content: str, attachments: List[MediaAttachment]) -> str:
     """
     Replace markdown ![alt](url) and HTML <img> tags with :::media blocks
-    From discord-publish-bot/publishing/service.py:_generate_media_block()
+    Works with both GitHub uploads and external URLs
     """
     transformed = content
 
     for attachment in attachments:
-        if not attachment.permanent_url:
+        # Use permanent_url if available (uploaded to S3), otherwise use original URL (external)
+        final_url = attachment.permanent_url if attachment.permanent_url else attachment.url
+
+        if not final_url:
             continue
 
         # Create :::media block
         media_block = f''':::media
-- url: "{attachment.permanent_url}"
+- url: "{final_url}"
   alt: "{attachment.alt_text}"
   mediaType: "{attachment.media_type}"
   aspectRatio: "landscape"
@@ -270,10 +293,10 @@ def transform_markdown_to_media_blocks(content: str, attachments: List[MediaAtta
         replaced = False
 
         # Try to match markdown patterns first
-        # Match both ![alt](github-url) and [text](github-url)
+        # Match both ![alt](url) and [text](url)
         markdown_patterns = [
-            f'![{re.escape(attachment.alt_text)}]({re.escape(attachment.github_url)})',
-            f'[{re.escape(attachment.alt_text)}]({re.escape(attachment.github_url)})'
+            f'![{re.escape(attachment.alt_text)}]({re.escape(attachment.url)})',
+            f'[{re.escape(attachment.alt_text)}]({re.escape(attachment.url)})'
         ]
 
         for pattern in markdown_patterns:
@@ -283,10 +306,10 @@ def transform_markdown_to_media_blocks(content: str, attachments: List[MediaAtta
                 break
 
         # If not found, try HTML img tag pattern
-        # Match: <img ... src="github-url" ... />
+        # Match: <img ... src="url" ... />
         if not replaced:
             # Build regex that matches img tag with this specific src URL
-            escaped_url = re.escape(attachment.github_url)
+            escaped_url = re.escape(attachment.url)
             html_pattern = rf'<img\s+[^>]*src=["\']?{escaped_url}["\']?[^>]*/?>'
 
             match = re.search(html_pattern, transformed, re.IGNORECASE)
@@ -340,6 +363,29 @@ tags: {json.dumps(tags) if tags else '[]'}
     return filename
 
 
+def _detect_media_type_from_url(url: str) -> str:
+    """
+    Detect media type from URL for external links
+    Returns: 'image', 'video', or 'audio'
+    """
+    url_lower = url.lower()
+
+    # Video platforms and extensions
+    if any(platform in url_lower for platform in ['youtube.com', 'youtu.be', 'vimeo.com', 'dailymotion.com']):
+        return 'video'
+    if any(ext in url_lower for ext in ['.mp4', '.mov', '.avi', '.webm', '.mkv', '.m4v', '.flv']):
+        return 'video'
+
+    # Audio platforms and extensions
+    if any(platform in url_lower for platform in ['soundcloud.com', 'spotify.com', 'music.apple.com']):
+        return 'audio'
+    if any(ext in url_lower for ext in ['.mp3', '.wav', '.ogg', '.m4a', '.flac', '.aac']):
+        return 'audio'
+
+    # Default to image
+    return 'image'
+
+
 def main():
     parser = argparse.ArgumentParser(description='Process GitHub issue media attachments')
     parser.add_argument('--issue-json', required=True, help='Path to issue data JSON file')
@@ -364,9 +410,11 @@ def main():
     attachments = parse_markdown_for_attachments(content)
 
     if not attachments:
-        print("⚠️  No GitHub-hosted attachments found in content")
+        print("⚠️  No media URLs found in content")
         print("   Content will be preserved as-is without media transformations")
-        print("   Note: You can drag-and-drop files into the issue to add media")
+        print("   Tip: Add media by:")
+        print("   - Drag-and-drop files into the issue")
+        print("   - Paste image URLs from external sources")
         # Still generate markdown file with the content
         markdown_file = generate_markdown_file(issue_data, content)
         print()
@@ -384,22 +432,38 @@ def main():
 
     print(f"📎 Found {len(attachments)} attachment(s)\n")
 
-    # Upload to S3
-    uploader = LinodeMediaUploader()
+    # Separate GitHub uploads from external URLs
+    github_uploads = [a for a in attachments if not a.is_external]
+    external_urls = [a for a in attachments if a.is_external]
 
-    for attachment in attachments:
-        try:
-            permanent_url, media_type = uploader.upload_from_github(
-                attachment.github_url,
-                attachment.filename
-            )
-            attachment.permanent_url = permanent_url
-            attachment.media_type = media_type
-        except Exception as e:
-            print(f"❌ Failed to upload {attachment.filename}: {e}")
-            # Keep original GitHub URL as fallback
-            attachment.permanent_url = attachment.github_url
-            attachment.media_type = 'image'
+    if github_uploads:
+        print(f"📤 Processing {len(github_uploads)} GitHub upload(s)...")
+        # Upload GitHub attachments to S3
+        uploader = LinodeMediaUploader()
+
+        for attachment in github_uploads:
+            try:
+                permanent_url, media_type = uploader.upload_from_github(
+                    attachment.url,
+                    attachment.filename
+                )
+                attachment.permanent_url = permanent_url
+                attachment.media_type = media_type
+            except Exception as e:
+                print(f"❌ Failed to upload {attachment.filename}: {e}")
+                # Keep original URL as fallback
+                attachment.permanent_url = attachment.url
+                attachment.media_type = 'image'
+
+    if external_urls:
+        print(f"\n🔗 Processing {len(external_urls)} external URL(s)...")
+        # For external URLs, just detect media type and use the URL as-is
+        for attachment in external_urls:
+            # Detect media type from URL
+            attachment.media_type = _detect_media_type_from_url(attachment.url)
+            # External URLs don't need permanent_url - we'll use original URL
+            attachment.permanent_url = None
+            print(f"   ✓ {attachment.url[:60]}{'...' if len(attachment.url) > 60 else ''} → {attachment.media_type}")
 
     # Transform markdown
     print("🔄 Transforming markdown to :::media blocks...")
